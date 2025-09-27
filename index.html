@@ -13,6 +13,7 @@
             --light-grey: #f0f2f5;
             --dark-grey: #6c757d;
             --text-color: #333;
+            --line-color: #dc3545;
         }
 
         *, *::before, *::after {
@@ -29,7 +30,7 @@
             color: var(--text-color);
             margin: 0;
             padding: 1rem;
-            overflow: hidden; 
+            overflow: hidden;
         }
         
         .container {
@@ -55,19 +56,15 @@
             font-size: clamp(2rem, 12vw, 3.5rem);
             letter-spacing: clamp(0.25rem, 2vw, 0.5rem);
         }
-        .bingo-letters span {
-            color: #dcdcdc;
-            transition: color 0.3s ease-in-out;
-        }
-        .bingo-letters span.achieved {
-            color: #ff414d;
-        }
+        .bingo-letters span { color: #dcdcdc; transition: color 0.3s ease-in-out; }
+        .bingo-letters span.achieved { color: #ff414d; }
         
         #game-board {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 8px;
             margin: 0 auto 1.5rem;
+            position: relative; /* Crucial for positioning the lines */
         }
         
         .cell {
@@ -91,10 +88,7 @@
             font-weight: 500;
         }
 
-        .cell.marked {
-            background-color: var(--primary-color);
-            color: white;
-        }
+        .cell.marked { background-color: var(--primary-color); color: white; }
         .cell.marked .cell-content::after {
             content: '✕';
             position: absolute;
@@ -123,14 +117,8 @@
             min-width: 120px;
         }
 
-        button:hover:not(:disabled) {
-            transform: translateY(-2px);
-        }
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
+        button:hover:not(:disabled) { transform: translateY(-2px); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; transform: none; }
 
         #btn-new-game { background-color: var(--success-color); color: white; }
         #btn-fill { background-color: var(--primary-color); color: white; }
@@ -144,17 +132,31 @@
             font-size: clamp(1.5rem, 7vw, 2rem);
         }
         
-        .hidden {
-            display: none;
-        }
+        .hidden { display: none; }
 
-        #fireworks-container {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 100;
+        /* --- Winning Line CSS --- */
+        #line-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .line {
+            position: absolute;
+            background-color: var(--line-color);
+            border-radius: 4px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.5);
         }
+        /* Horizontal Lines */
+        .line-row { left: -5%; width: 110%; height: 5px; }
+        .line-row-0 { top: 10%; } .line-row-1 { top: 30%; } .line-row-2 { top: 50%; margin-top: -2.5px; }
+        .line-row-3 { top: 70%; } .line-row-4 { top: 90%; }
+        /* Vertical Lines */
+        .line-col { top: -5%; height: 110%; width: 5px; }
+        .line-col-0 { left: 10%; } .line-col-1 { left: 30%; } .line-col-2 { left: 50%; margin-left: -2.5px; }
+        .line-col-3 { left: 70%; } .line-col-4 { left: 90%; }
+        /* Diagonal Lines */
+        .line-diag { top: 50%; left: 50%; width: 130%; height: 5px; }
+        .line-diag-1 { transform: translate(-50%, -50%) rotate(45deg); }
+        .line-diag-2 { transform: translate(-50%, -50%) rotate(-45deg); }
+
+        /* --- Fireworks CSS --- */
+        #fireworks-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
         .firework {
             position: absolute;
             width: 6px; height: 6px;
@@ -177,7 +179,9 @@
         <span id="letter-B">B</span><span id="letter-I">I</span><span id="letter-N">N</span><span id="letter-G">G</span><span id="letter-O">O</span>
     </div>
 
-    <div id="game-board"></div>
+    <div id="game-board">
+        <div id="line-container"></div>
+    </div>
 
     <div id="message-box"></div>
     
@@ -191,7 +195,9 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // DOM Elements
         const boardElement = document.getElementById('game-board');
+        const lineContainer = document.getElementById('line-container');
         const newGameBtn = document.getElementById('btn-new-game');
         const fillBtn = document.getElementById('btn-fill');
         const clearBtn = document.getElementById('btn-clear');
@@ -204,18 +210,24 @@
             O: document.getElementById('letter-O'),
         };
 
+        // Game State
         let markedBoard = Array(5).fill(null).map(() => Array(5).fill(false));
         let completedLines = new Set();
         let gameActive = false;
+        let fireworksInterval = null;
         const BINGO_LETTERS = ['B', 'I', 'N', 'G', 'O'];
 
+        // Event Listeners
         newGameBtn.addEventListener('click', startNewGame);
         fillBtn.addEventListener('click', fillCard);
         clearBtn.addEventListener('click', clearGame);
         lostBtn.addEventListener('click', handleGameLost);
 
         function initializeBoard(addListeners = false) {
-            boardElement.innerHTML = '';
+            // Clear board but keep line container
+            while (boardElement.firstChild !== lineContainer) {
+                boardElement.removeChild(boardElement.firstChild);
+            }
             for (let i = 0; i < 5; i++) {
                 for (let j = 0; j < 5; j++) {
                     const cell = document.createElement('div');
@@ -248,7 +260,7 @@
             }
 
             initializeBoard(true);
-            const cells = boardElement.children;
+            const cells = Array.from(boardElement.children).filter(el => el.classList.contains('cell'));
             for (let i = 0; i < 25; i++) {
                 cells[i].querySelector('.cell-content').textContent = numbers[i];
             }
@@ -261,14 +273,12 @@
 
         function handleCellClick(event) {
             if (!gameActive) return;
-
             const cell = event.currentTarget;
             const row = parseInt(cell.dataset.row);
             const col = parseInt(cell.dataset.col);
 
             markedBoard[row][col] = !markedBoard[row][col];
             cell.classList.toggle('marked');
-            
             checkForBingo();
         }
 
@@ -283,7 +293,6 @@
         
         function checkForBingo() {
             completedLines.clear();
-
             for (let i = 0; i < 5; i++) {
                 if (markedBoard[i].every(cell => cell)) completedLines.add(`row-${i}`);
             }
@@ -294,12 +303,12 @@
             if (markedBoard.every((row, idx) => row[4 - idx])) completedLines.add('diag-2');
             
             updateBingoDisplay();
+            drawWinningLines();
         }
         
         function updateBingoDisplay() {
             const bingoCount = completedLines.size;
             Object.values(bingoLetterSpans).forEach(span => span.classList.remove('achieved'));
-
             for (let i = 0; i < bingoCount; i++) {
                 if (BINGO_LETTERS[i]) {
                     bingoLetterSpans[BINGO_LETTERS[i]].classList.add('achieved');
@@ -312,50 +321,64 @@
                 gameActive = false;
                 clearBtn.disabled = false;
                 lostBtn.disabled = true;
-                triggerFireworks();
+                if (!fireworksInterval) startContinuousFireworks();
             } else if (gameActive) {
                  messageBox.textContent = '';
             }
         }
+        
+        function drawWinningLines() {
+            lineContainer.innerHTML = '';
+            completedLines.forEach(lineId => {
+                const line = document.createElement('div');
+                line.classList.add('line');
+                if (lineId.startsWith('row')) line.classList.add('line-row', `line-${lineId}`);
+                if (lineId.startsWith('col')) line.classList.add('line-col', `line-${lineId}`);
+                if (lineId.startsWith('diag')) line.classList.add('line-diag', `line-${lineId}`);
+                lineContainer.appendChild(line);
+            });
+        }
 
         function triggerFireworks() {
             const colors = ['#ffc107', '#dc3545', '#28a745', '#1a73e8'];
-            for (let i = 0; i < 40; i++) {
+            for (let i = 0; i < 20; i++) { // Reduced count for better performance in a loop
                 const particle = document.createElement('div');
                 particle.classList.add('firework');
                 particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-                
-                const x = Math.random() * window.innerWidth;
-                const y = Math.random() * window.innerHeight;
-
-                particle.style.left = `${x}px`;
-                particle.style.top = `${y}px`;
-                
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
                 fireworksContainer.appendChild(particle);
-
-                setTimeout(() => {
-                    particle.remove();
-                }, 1000);
+                setTimeout(() => particle.remove(), 1000);
             }
+        }
+
+        function startContinuousFireworks() {
+            triggerFireworks(); // Initial burst
+            fireworksInterval = setInterval(triggerFireworks, 800);
+        }
+
+        function stopContinuousFireworks() {
+            clearInterval(fireworksInterval);
+            fireworksInterval = null;
+            fireworksContainer.innerHTML = '';
         }
 
         function clearGame() {
             markedBoard = Array(5).fill(null).map(() => Array(5).fill(false));
             completedLines.clear();
             gameActive = false;
-            fireworksContainer.innerHTML = '';
-
+            stopContinuousFireworks();
+            lineContainer.innerHTML = '';
             initializeBoard(false);
-
             messageBox.textContent = '';
             fillBtn.classList.add('hidden');
             newGameBtn.disabled = false;
             clearBtn.disabled = false;
             lostBtn.disabled = true;
-            
             Object.values(bingoLetterSpans).forEach(span => span.classList.remove('achieved'));
         }
 
+        // Initial setup
         lostBtn.disabled = true;
         initializeBoard(false);
     });
