@@ -1,431 +1,1443 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplayer Bingo</title>
+    <title>Bingo Festival</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --light-grey: #f0f2f5;
+            --background-start: #6dd5ed;
+            --background-end: #2193b0;
+            --surface-color: #ffffff;
             --text-color: #333;
-            --line-color: #dc3545; /* Red lines */
+            --primary-accent: #ff6b6b;
+            --secondary-accent: #ffc107;
+            --line-color: var(--primary-accent);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
-        *, *::before, *::after { box-sizing: border-box; }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 14px;
+        }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: var(--font-family);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: var(--light-grey);
+            background: linear-gradient(135deg, var(--background-start), var(--background-end));
             color: var(--text-color);
             margin: 0;
             padding: 1rem;
+            overflow-x: hidden;
+            position: relative;
+            line-height: 1.4;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Enhanced Setup Modal with Animations */
+        #setup-modal {
+            background-color: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 100%;
+            max-width: 95vw;
+            min-width: 280px;
+            z-index: 200;
+            animation: fadeInScale 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            margin: 0 auto;
+            position: relative;
             overflow: hidden;
         }
-        
-        #setup-modal {
-            background-color: #ffffff;
-            padding: 2rem 3rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            text-align: center;
+
+        #setup-modal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
             width: 100%;
-            max-width: 400px;
-            z-index: 200;
+            height: 5px;
+            background: linear-gradient(90deg, transparent, var(--primary-accent), transparent);
+            animation: shimmer 3s infinite;
         }
-        #setup-modal h2 { margin-top: 0; }
-        #setup-modal input {
-            font-size: 1.2rem;
-            padding: 8px;
-            width: 100px;
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                left: -100%;
+            }
+
+            100% {
+                left: 100%;
+            }
+        }
+
+        #setup-modal h2 {
+            margin-top: 0;
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        #setup-modal label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: #555;
+            font-size: clamp(0.9rem, 3vw, 1rem);
+        }
+
+        #setup-modal input[type="text"],
+        #setup-modal input[type="number"] {
+            font-size: clamp(1rem, 4vw, 1.2rem);
+            padding: 12px;
+            width: 100%;
             text-align: center;
-            margin: 1rem 0;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            margin: 0.5rem 0 1rem;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
         }
-        #setup-modal button { font-size: 1.1rem; background-color: #28a745; color: white; }
-        .color-palette { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 1rem; }
+
+        #setup-modal input:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .setup-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-gametype {
+            padding: 12px 15px;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            font-weight: 700;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6c757d, #495057);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            flex: 1;
+            min-width: 80px;
+            max-width: 120px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-gametype::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-gametype:hover::after {
+            left: 100%;
+        }
+
+        .btn-gametype:hover:not(.active) {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+            background: linear-gradient(135deg, #7c858e, #5a6268);
+        }
+
+        .btn-gametype.active {
+            background: linear-gradient(45deg, var(--primary-accent), #ff8c42);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+            border: 2px solid white;
+        }
+
+        .color-palette {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
         .color-swatch {
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             cursor: pointer;
-            border: 3px solid transparent;
-            transition: transform 0.2s;
+            border: 4px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        .color-swatch:hover { transform: scale(1.1); }
-        .color-swatch.taken { opacity: 0.2; cursor: not-allowed; transform: none; }
 
+        .color-swatch::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .color-swatch:hover::before {
+            opacity: 1;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        .color-swatch.selected {
+            transform: scale(1.15) rotate(0deg);
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
+            }
+
+            100% {
+                box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+            }
+        }
+
+        .color-swatch.taken {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Enhanced Game Container */
         .container {
             text-align: center;
-            background-color: #ffffff;
-            padding: clamp(1rem, 5vw, 2rem);
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background-color: var(--surface-color);
+            padding: clamp(0.8rem, 3vw, 1.5rem);
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
             width: 100%;
-            max-width: 450px;
+            max-width: min(95vw, 550px);
+            min-width: 280px;
             z-index: 10;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
         }
-        
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent), var(--primary-accent));
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
         .bingo-letters {
-            font-weight: bold;
-            margin-bottom: 1rem;
-            font-size: clamp(2.5rem, 12vw, 4rem);
-            letter-spacing: clamp(0.25rem, 2vw, 0.5rem);
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            font-size: clamp(1.8rem, 8vw, 3.5rem);
+            letter-spacing: clamp(0.1rem, 1vw, 0.3rem);
+            display: flex;
+            justify-content: center;
+            gap: clamp(0.1rem, 1vw, 0.3rem);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            flex-wrap: wrap;
         }
-        .bingo-letters span { color: #dcdcdc; transition: color 0.3s ease-in-out; }
-        .bingo-letters span.achieved { color: var(--line-color); }
+
+        .bingo-letters span {
+            color: #e0e0e0;
+            transition: all 0.5s ease;
+            min-width: 1.1em;
+            text-align: center;
+            position: relative;
+            background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .bingo-letters span.achieved {
+            color: var(--line-color);
+            background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: letterPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, glow 2s infinite;
+            transform: scale(1.2);
+        }
+
+        @keyframes letterPop {
+            0% {
+                transform: scale(0.8) rotate(-10deg);
+                opacity: 0;
+            }
+
+            70% {
+                transform: scale(1.3) rotate(5deg);
+            }
+
+            100% {
+                transform: scale(1.2) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
+            }
+
+            50% {
+                text-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
+            }
+
+            100% {
+                text-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
+            }
+        }
 
         #turn-indicator {
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            font-size: 1.2rem;
-            font-weight: bold;
+            padding: 12px 20px;
+            border-radius: 50px;
+            margin: 0 auto 1.5rem;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            font-weight: 600;
             color: white;
-            transition: background-color 0.3s ease;
+            max-width: 90%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
-        
+
+        #turn-indicator::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        #turn-indicator:hover::before {
+            left: 100%;
+        }
+
         #game-board {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
+            gap: 6px;
             margin: 0 auto 1.5rem;
             position: relative;
-            z-index: 0;
-        }
-        
-        .cell {
             width: 100%;
-            padding-top: 100%;
-            position: relative;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            background-color: #fff;
-            cursor: pointer;
-            transition: background-color 0.3s;
+            aspect-ratio: 1 / 1;
+            max-height: 70vh;
+            background: radial-gradient(circle at center, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
         }
-        .cell.marked { color: white; }
-        
-        .cell-content {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+
+        .cell {
+            position: relative;
+            cursor: pointer;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: clamp(1rem, 5vw, 1.5rem);
-            font-weight: 500;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
         }
-        .cell-content span { position: relative; }
-        
-        .cell.marked .cell-content::after {
-            content: '✕';
+
+        .cell::before {
+            content: '';
             position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .cell:hover::before {
+            opacity: 1;
+        }
+
+        .cell:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .cell-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            font-size: clamp(0.7rem, 3vw, 1.1rem);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .cell.marked {
+            background: var(--player-color, #ccc);
+            border-color: transparent;
+            transform: scale(0.95);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2), 0 3px 10px rgba(0, 0, 0, 0.1);
+            animation: markCell 0.4s ease forwards;
+        }
+
+        @keyframes markCell {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(0.9);
+            }
+
+            100% {
+                transform: scale(0.95);
+            }
+        }
+
+        /* Keep numbers visible after marking */
+        .cell.marked .cell-content span {
+            opacity: 0.3;
+            /* Reduced opacity but still visible */
+            transform: scale(0.8);
             color: white;
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .cell.marked::after {
+            content: '✕';
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(1.2rem, 6vw, 2rem);
             line-height: 1;
-            font-size: clamp(2.5rem, 10vw, 3.5rem);
-            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            animation: popInMark 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            z-index: 2;
         }
-        
-        .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 1rem; }
+
+        @keyframes popInMark {
+            from {
+                transform: translate(-50%, -50%) scale(0.5) rotate(-180deg);
+                opacity: 0;
+            }
+
+            to {
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        /* Enhanced Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
         button {
-            padding: 10px 18px;
-            font-size: 1rem;
+            padding: 12px 20px;
+            font-size: clamp(0.9rem, 3vw, 1rem);
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.2s;
-            font-weight: 500;
-            flex-grow: 1;
-            min-width: 120px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            flex: 1;
+            min-width: 130px;
+            max-width: 200px;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
         }
-        button:hover:not(:disabled) { transform: translateY(-2px); }
-        button:disabled { background-color: #ccc; cursor: not-allowed; transform: none; }
 
-        #btn-new-game { background-color: #ffc107; }
-        #btn-fill { background-color: #007bff; color: white; }
-        
-        #message-box {
-            font-weight: bold;
-            height: 45px;
-            margin-top: 1rem;
-            font-size: clamp(1.5rem, 7vw, 2rem);
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
         }
-        
-        .hidden { display: none; }
 
-        #line-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Unified button colors */
+        #btn-new-game,
+        #submit-player-count,
+        #player-setup-next,
+        #submit-gametype {
+            background: linear-gradient(45deg, #f7b733, #fc4a1a);
+        }
+
+        #btn-fill {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+        }
+
+        #btn-start {
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+
+        #btn-lost {
+            background: linear-gradient(45deg, #6c757d, #495057);
+        }
+
+        /* Enhanced Winning Lines & Effects */
+        #line-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
         .line {
             position: absolute;
-            background-color: var(--line-color);
-            border-radius: 4px;
-            box-shadow: 0 0 8px rgba(0,0,0,0.5);
+            background: linear-gradient(90deg, var(--line-color), var(--secondary-accent), var(--line-color));
+            border-radius: 5px;
+            box-shadow: 0 0 15px var(--line-color);
+            background-size: 200% 100%;
+            animation: gradientShift 2s ease infinite;
         }
-        .line-row { left: -5%; width: 110%; height: 5px; }
-        .line-row-0 { top: 10%; } .line-row-1 { top: 30%; } .line-row-2 { top: 50%; margin-top: -2.5px; }
-        .line-row-3 { top: 70%; } .line-row-4 { top: 90%; }
-        .line-col { top: -5%; height: 110%; width: 5px; }
-        .line-col-0 { left: 10%; } .line-col-1 { left: 30%; } .line-col-2 { left: 50%; margin-left: -2.5px; }
-        .line-col-3 { left: 70%; } .line-col-4 { left: 90%; }
-        .line-diag { top: 50%; left: 50%; width: 130%; height: 5px; }
-        .line-diag-1 { transform: translate(-50%, -50%) rotate(45deg); }
-        .line-diag-2 { transform: translate(-50%, -50%) rotate(-45deg); }
 
-        #fireworks-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
-        .firework { position: absolute; width: 6px; height: 6px; border-radius: 50%; opacity: 1; animation: explode 1s forwards; }
-        @keyframes explode { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
+        .line-row {
+            left: -5%;
+            width: 110%;
+            height: 6px;
+            transform: translateY(-50%);
+            animation: drawRowLine 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .line-col {
+            top: -5%;
+            height: 110%;
+            width: 6px;
+            transform: translateX(-50%);
+            animation: drawColLine 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes drawRowLine {
+            from {
+                transform: translateY(-50%) scaleX(0);
+            }
+
+            to {
+                transform: translateY(-50%) scaleX(1);
+            }
+        }
+
+        @keyframes drawColLine {
+            from {
+                transform: translateX(-50%) scaleY(0);
+            }
+
+            to {
+                transform: translateX(-50%) scaleY(1);
+            }
+        }
+
+        .line-diag {
+            top: 50%;
+            left: 50%;
+            width: 142%;
+            height: 6px;
+            transform-origin: center;
+        }
+
+        .line-diag-1 {
+            animation: drawDiag1 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .line-diag-2 {
+            animation: drawDiag2 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes drawDiag1 {
+            from {
+                transform: translate(-50%, -50%) rotate(45deg) scaleX(0);
+            }
+
+            to {
+                transform: translate(-50%, -50%) rotate(45deg) scaleX(1);
+            }
+        }
+
+        @keyframes drawDiag2 {
+            from {
+                transform: translate(-50%, -50%) rotate(-45deg) scaleX(0);
+            }
+
+            to {
+                transform: translate(-50%, -50%) rotate(-45deg) scaleX(1);
+            }
+        }
+
+        /* Enhanced End Game Overlays */
+        #effects-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5000;
+            animation: fadeIn 0.5s ease-out;
+            padding: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .overlay-box {
+            text-align: center;
+            color: white;
+            width: 100%;
+            max-width: min(95vw, 500px);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+            animation: popInOverlay 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes popInOverlay {
+            0% {
+                transform: scale(0.8) translateY(50px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .overlay-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent), var(--primary-accent));
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        .overlay-box .emoji {
+            font-size: clamp(80px, 25vw, 150px);
+            animation: popIn 0.5s 0.2s ease-out backwards, float 3s ease-in-out infinite;
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .overlay-box h1 {
+            font-size: clamp(2.5rem, 15vw, 6rem);
+            font-weight: 900;
+            margin: 0;
+            line-height: 1;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .overlay-box h1 span {
+            display: inline-block;
+            animation: dropIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+        }
+
+        .overlay-controls {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        @keyframes dropIn {
+            from {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        #win-overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        #win-overlay h1 {
+            background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-rematch {
+            background: linear-gradient(45deg, var(--secondary-accent), #ff8c00);
+        }
+
+        .btn-main-menu {
+            background: linear-gradient(45deg, #6c757d, #495057);
+        }
+
+        .btn-close-celebration {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+        }
+
+        #lost-overlay {
+            background-color: rgba(20, 20, 30, 0.8);
+            backdrop-filter: grayscale(1) blur(2px);
+        }
+
+        #lost-overlay h1 {
+            color: #aaa;
+            text-shadow: none;
+        }
+
+        #lost-overlay .emoji {
+            animation: shake 0.82s cubic-bezier(.36, .07, .19, .97) both;
+            transform: translate3d(0, 0, 0);
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            opacity: 0;
+            animation: fall 5s linear forwards;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-20vh) rotateZ(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(120vh) rotateZ(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Landscape orientation adjustments */
+        @media (max-height: 500px) and (orientation: landscape) {
+            body {
+                padding: 0.5rem;
+                align-items: flex-start;
+                min-height: auto;
+                height: 100vh;
+                overflow-y: auto;
+            }
+
+            .container {
+                padding: 0.8rem;
+                max-width: 95vw;
+            }
+
+            #game-board {
+                max-height: 50vh;
+            }
+
+            .bingo-letters {
+                margin-bottom: 0.5rem;
+            }
+
+            .controls {
+                margin-top: 0.5rem;
+            }
+        }
+
+        /* Very small screens */
+        @media (max-width: 320px) {
+            html {
+                font-size: 12px;
+            }
+
+            .btn-gametype {
+                min-width: 70px;
+                padding: 10px 12px;
+            }
+
+            .color-swatch {
+                width: 35px;
+                height: 35px;
+            }
+        }
+
+        /* Large screens */
+        @media (min-width: 768px) {
+            html {
+                font-size: 16px;
+            }
+
+            #setup-modal {
+                padding: 2rem 3rem;
+            }
+
+            .container {
+                padding: clamp(1rem, 5vw, 2.5rem);
+            }
+
+            #game-board {
+                gap: 8px;
+            }
+
+            .controls {
+                gap: 12px;
+            }
+        }
+
+        /* Extra large screens */
+        @media (min-width: 1200px) {
+            #game-board {
+                max-height: 500px;
+            }
+        }
     </style>
 </head>
+
 <body>
+    <div id="effects-container"></div>
 
-<div id="fireworks-container"></div>
-
-<div id="setup-modal">
-    <div id="player-count-screen">
-        <h2>Welcome to Bingo!</h2>
-        <label for="player-count">How many players?</label><br>
-        <input type="number" id="player-count" min="1" max="6" value="2"><br>
-        <button id="submit-player-count">Next</button>
-    </div>
-    <div id="color-select-screen" class="hidden">
-        <h2 id="color-prompt"></h2>
-        <div class="color-palette" id="color-palette"></div>
-    </div>
-</div>
-
-<div class="container hidden">
-    <div class="bingo-letters">
-        <span id="letter-B">B</span><span id="letter-I">I</span><span id="letter-N">N</span><span id="letter-G">G</span><span id="letter-O">O</span>
-    </div>
-    <div id="turn-indicator"></div>
-
-    <div id="game-board">
-        <div id="line-container"></div>
+    <div id="win-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <div class="emoji">🏆</div>
+            <h1>
+                <span style="animation-delay: 0.3s;">B</span><span style="animation-delay: 0.35s;">I</span>
+                <span style="animation-delay: 0.4s;">N</span><span style="animation-delay: 0.45s;">G</span>
+                <span style="animation-delay: 0.5s;">O</span><span style="animation-delay: 0.55s;">!</span>
+            </h1>
+            <div class="overlay-controls">
+                <button class="btn-rematch">Rematch</button>
+                <button class="btn-main-menu">Main Menu</button>
+                <button class="btn-close-celebration">Close Celebration</button>
+            </div>
+        </div>
     </div>
 
-    <div id="message-box"></div>
-    
-    <div class="controls">
-        <button id="btn-new-game">Main Menu</button>
-        <button id="btn-fill" class="hidden">Fill Card</button>
+    <div id="lost-overlay" class="overlay hidden">
+        <div class="overlay-box">
+            <div class="emoji">😥</div>
+            <h1>Game Over</h1>
+            <div class="overlay-controls">
+                <button class="btn-rematch">Rematch</button>
+                <button class="btn-main-menu">Main Menu</button>
+            </div>
+        </div>
     </div>
-</div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // --- DOM Elements ---
-        const setupModal = document.getElementById('setup-modal');
-        const playerCountScreen = document.getElementById('player-count-screen');
-        const colorSelectScreen = document.getElementById('color-select-screen');
-        const playerCountInput = document.getElementById('player-count');
-        const submitPlayerCountBtn = document.getElementById('submit-player-count');
-        const colorPrompt = document.getElementById('color-prompt');
-        const colorPalette = document.getElementById('color-palette');
-        const gameContainer = document.querySelector('.container');
-        const boardElement = document.getElementById('game-board');
-        const lineContainer = document.getElementById('line-container');
-        const newGameBtn = document.getElementById('btn-new-game');
-        const fillBtn = document.getElementById('btn-fill');
-        const messageBox = document.getElementById('message-box');
-        const fireworksContainer = document.getElementById('fireworks-container');
-        const turnIndicator = document.getElementById('turn-indicator');
-        const bingoLetterSpans = {
-            B: document.getElementById('letter-B'), I: document.getElementById('letter-I'),
-            N: document.getElementById('letter-N'), G: document.getElementById('letter-G'),
-            O: document.getElementById('letter-O'),
-        };
-        const BINGO_LETTERS = ['B', 'I', 'N', 'G', 'O'];
-        
-        // --- Game State ---
-        let gameActive = false, fireworksInterval = null;
-        let playerCount = 0, currentPlayerIndex = 0;
-        let playerColors = [];
-        const AVAILABLE_COLORS = ['#007bff', '#28a745', '#ffc107', '#6f42c1', '#fd7e14', '#17a2b8', '#dc3545'];
-        let markedBoard, completedLines;
+    <div id="setup-modal">
+        <div id="player-count-screen">
+            <h2>How many players?</h2>
+            <input type="number" id="player-count-input" min="1" max="6" value="2"><br>
+            <button id="submit-player-count">Next</button>
+        </div>
+        <div id="gametype-select-screen" class="hidden">
+            <h2>Choose Grid Size</h2>
+            <div class="setup-buttons">
+                <button class="btn-gametype active" data-size="5">5 &times; 5</button>
+                <button class="btn-gametype" data-size="6">6 &times; 6</button>
+                <button class="btn-gametype" data-size="7">7 &times; 7</button>
+            </div>
+            <button id="submit-gametype" style="margin-top: 1.5rem;">Next</button>
+        </div>
+        <div id="player-setup-screen" class="hidden">
+            <h2 id="player-prompt"></h2>
+            <label for="player-name-input">Name</label>
+            <input type="text" id="player-name-input" placeholder="Enter Name">
+            <div class="color-palette" id="color-palette"></div>
+            <button id="player-setup-next">Confirm</button>
+        </div>
+    </div>
 
-        // --- Setup Flow ---
-        submitPlayerCountBtn.addEventListener('click', () => {
-            const count = parseInt(playerCountInput.value);
-            if (count >= 1 && count <= AVAILABLE_COLORS.length) {
-                playerCount = count;
-                playerColors = [];
-                playerCountScreen.classList.add('hidden');
-                colorSelectScreen.classList.remove('hidden');
-                promptPlayerColor(0);
-            } else {
-                alert(`Please enter a number between 1 and ${AVAILABLE_COLORS.length}.`);
+    <div class="container hidden">
+        <div class="bingo-letters" id="bingo-letters">
+            </div>
+        <div id="turn-indicator"></div>
+        <div id="game-board">
+            <div id="line-container"></div>
+        </div>
+        <div class="controls">
+            <button id="btn-fill">Fill Card</button>
+            <button id="btn-start" class="hidden">Start Game</button>
+            <button id="btn-lost" class="hidden">I Lost / Quit</button>
+            <button id="btn-rematch-main" class="hidden btn-rematch">Rematch</button>
+            <button id="btn-main-menu-main" class="hidden btn-main-menu">Main Menu</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const setupModal = document.getElementById('setup-modal');
+            const playerCountScreen = document.getElementById('player-count-screen');
+            const gametypeSelectScreen = document.getElementById('gametype-select-screen');
+            const playerSetupScreen = document.getElementById('player-setup-screen');
+            const playerCountInput = document.getElementById('player-count-input');
+            const submitPlayerCountBtn = document.getElementById('submit-player-count');
+            const submitGametypeBtn = document.getElementById('submit-gametype');
+            const playerPrompt = document.getElementById('player-prompt');
+            const playerNameInput = document.getElementById('player-name-input');
+            const colorPalette = document.getElementById('color-palette');
+            const playerSetupNextBtn = document.getElementById('player-setup-next');
+            const gameContainer = document.querySelector('.container');
+            const boardElement = document.getElementById('game-board');
+            const bingoLettersContainer = document.getElementById('bingo-letters');
+            const fillBtn = document.getElementById('btn-fill');
+            const startBtn = document.getElementById('btn-start');
+            const lostBtn = document.getElementById('btn-lost');
+            const effectsContainer = document.getElementById('effects-container');
+            const turnIndicator = document.getElementById('turn-indicator');
+            const winOverlay = document.getElementById('win-overlay');
+            const lostOverlay = document.getElementById('lost-overlay');
+            const closeCelebrationBtn = document.querySelector('.btn-close-celebration');
+            // *** ADDED IDs FOR NEW BUTTONS ***
+            const rematchBtnMain = document.getElementById('btn-rematch-main');
+            const mainMenuBtnMain = document.getElementById('btn-main-menu-main');
+
+
+            // Game State
+            let gameActive = false,
+                confettiInterval = null,
+                gridSize = 5;
+            let playerCount = 0,
+                currentPlayerIndex = 0,
+                currentPlayerSetupIndex = 0;
+            let players = [];
+            let selectedColorForCurrentPlayer = null;
+            const AVAILABLE_COLORS = ['#007bff', '#28a745', '#ffc107', '#6f42c1', '#fd7e14', '#e83e8c'];
+            let markedBoard, completedLines;
+            let bingoLetterSpans = {};
+            let bingoLetters = [];
+
+            // Function to generate BINGO letters based on grid size
+            function generateBingoLetters(size) {
+                bingoLettersContainer.innerHTML = '';
+                bingoLetterSpans = {};
+                bingoLetters = [];
+
+                // Base BINGO letters
+                const baseLetters = ['B', 'I', 'N', 'G', 'O'];
+
+                // Determine how many letters we need based on grid size
+                let lettersNeeded = 5; // Default for 5x5
+                if (size === 6) lettersNeeded = 6; // BINGOO for 6x6
+                if (size === 7) lettersNeeded = 7; // BINGOOO for 7x7
+
+                // Generate the letters array
+                for (let i = 0; i < lettersNeeded; i++) {
+                    if (i < 5) {
+                        bingoLetters.push(baseLetters[i]);
+                    } else {
+                        // Add extra 'O's for larger grids
+                        bingoLetters.push('O');
+                    }
+                }
+
+                // Create the letter elements
+                bingoLetters.forEach((letter, index) => {
+                    const span = document.createElement('span');
+                    span.id = `letter-${letter}-${index}`;
+                    span.textContent = letter;
+                    bingoLettersContainer.appendChild(span);
+                    bingoLetterSpans[`${letter}-${index}`] = span;
+                });
+            }
+
+            // Function to get required lines to win based on grid size
+            function getRequiredLinesToWin(size) {
+                if (size === 5) return 5; // Standard BINGO
+                if (size === 6) return 6; // BINGOO
+                if (size === 7) return 7; // BINGOOO
+                return 5; // Default
+            }
+
+            // --- Setup Flow ---
+            submitPlayerCountBtn.addEventListener('click', () => {
+                const count = parseInt(playerCountInput.value);
+                if (count >= 1 && count <= AVAILABLE_COLORS.length) {
+                    playerCount = count;
+                    playerCountScreen.classList.add('hidden');
+                    gametypeSelectScreen.classList.remove('hidden');
+                } else {
+                    alert(`Please enter a number between 1 and ${AVAILABLE_COLORS.length}.`);
+                }
+            });
+
+            gametypeSelectScreen.querySelectorAll('.btn-gametype').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    gametypeSelectScreen.querySelectorAll('.btn-gametype').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                    gridSize = parseInt(e.target.dataset.size);
+                });
+            });
+
+            submitGametypeBtn.addEventListener('click', () => {
+                players = [];
+                gametypeSelectScreen.classList.add('hidden');
+                playerSetupScreen.classList.remove('hidden');
+                currentPlayerSetupIndex = 0;
+                promptPlayerSetup(currentPlayerSetupIndex);
+            });
+
+            function promptPlayerSetup(index) {
+                playerPrompt.textContent = `Player ${index + 1}: Name & Color`;
+                playerNameInput.value = `Player ${index + 1}`;
+                selectedColorForCurrentPlayer = null;
+                colorPalette.innerHTML = '';
+                const usedColors = players.map(p => p.color);
+
+                AVAILABLE_COLORS.forEach(color => {
+                    const swatch = document.createElement('div');
+                    swatch.classList.add('color-swatch');
+                    swatch.style.backgroundColor = color;
+                    if (usedColors.includes(color)) {
+                        swatch.classList.add('taken');
+                    } else {
+                        swatch.addEventListener('click', () => {
+                            colorPalette.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                            swatch.classList.add('selected');
+                            selectedColorForCurrentPlayer = color;
+                        });
+                    }
+                    colorPalette.appendChild(swatch);
+                });
+            }
+
+            playerSetupNextBtn.addEventListener('click', () => {
+                if (!selectedColorForCurrentPlayer) {
+                    alert('Please select a color!');
+                    return;
+                }
+                const playerName = playerNameInput.value.trim() || `Player ${currentPlayerSetupIndex + 1}`;
+                players[currentPlayerSetupIndex] = {
+                    name: playerName,
+                    color: selectedColorForCurrentPlayer
+                };
+
+                currentPlayerSetupIndex++;
+                if (currentPlayerSetupIndex < playerCount) {
+                    promptPlayerSetup(currentPlayerSetupIndex);
+                } else {
+                    setupModal.classList.add('hidden');
+                    gameContainer.classList.remove('hidden');
+                    startNewGame();
+                }
+            });
+
+            // --- Game Controls ---
+            // This now correctly applies listeners to ALL rematch/main menu buttons
+            document.querySelectorAll('.btn-rematch').forEach(btn => btn.addEventListener('click', rematch));
+            document.querySelectorAll('.btn-main-menu').forEach(btn => btn.addEventListener('click', goToMainMenu));
+            
+            lostBtn.addEventListener('click', () => lostOverlay.classList.remove('hidden'));
+            fillBtn.addEventListener('click', fillCard);
+            startBtn.addEventListener('click', startGame);
+
+            closeCelebrationBtn.addEventListener('click', () => {
+                winOverlay.classList.add('hidden');
+                stopConfetti();
+            });
+
+            // --- Game Logic ---
+            function initializeBoard() {
+                boardElement.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+                boardElement.querySelectorAll('.cell').forEach(cell => cell.remove());
+                for (let i = 0; i < gridSize * gridSize; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    const cellContent = document.createElement('div');
+                    cellContent.classList.add('cell-content');
+                    cellContent.appendChild(document.createElement('span'));
+                    cell.appendChild(cellContent);
+                    boardElement.appendChild(cell);
+                }
+            }
+
+            function startNewGame() {
+                // *** HIDE END-GAME BUTTONS ON NEW GAME ***
+                rematchBtnMain.classList.add('hidden');
+                mainMenuBtnMain.classList.add('hidden');
+
+                resetBoardState();
+                generateBingoLetters(gridSize);
+                initializeBoard();
+                fillBtn.classList.remove('hidden');
+                startBtn.classList.add('hidden');
+                lostBtn.classList.add('hidden');
+                turnIndicator.classList.add('hidden');
+            }
+
+            function rematch() {
+                winOverlay.classList.add('hidden');
+                lostOverlay.classList.add('hidden');
+                startNewGame();
+            }
+
+            function fillCard() {
+                const cellCount = gridSize * gridSize;
+                const numbers = Array.from({
+                    length: cellCount
+                }, (_, i) => i + 1);
+                for (let i = numbers.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+                }
+                const cells = boardElement.querySelectorAll('.cell');
+                cells.forEach((cell, i) => {
+                    cell.dataset.row = Math.floor(i / gridSize);
+                    cell.dataset.col = i % gridSize;
+                    cell.querySelector('span').textContent = numbers[i];
+                });
+                startBtn.classList.remove('hidden');
+            }
+
+            function startGame() {
+                gameActive = true;
+                fillBtn.classList.add('hidden');
+                startBtn.classList.add('hidden');
+                lostBtn.classList.remove('hidden');
+                turnIndicator.classList.remove('hidden');
+                boardElement.querySelectorAll('.cell').forEach(cell => {
+                    cell.addEventListener('click', handleCellClick);
+                });
+                updateTurnIndicator();
+            }
+
+            function handleCellClick(event) {
+                if (!gameActive) return;
+                const cell = event.currentTarget;
+                const row = parseInt(cell.dataset.row),
+                    col = parseInt(cell.dataset.col);
+                if (markedBoard[row][col] !== -1) return;
+                markedBoard[row][col] = currentPlayerIndex;
+                cell.style.setProperty('--player-color', players[currentPlayerIndex].color);
+                cell.classList.add('marked');
+                if (updateGameStatus()) return;
+                currentPlayerIndex = (currentPlayerIndex + 1) % playerCount;
+                updateTurnIndicator();
+            }
+
+            function updateTurnIndicator() {
+                turnIndicator.textContent = `${players[currentPlayerIndex].name}'s Turn`;
+                turnIndicator.style.backgroundColor = players[currentPlayerIndex].color;
+            }
+
+            function updateGameStatus() {
+                const linesToCheck = new Set();
+                for (let i = 0; i < gridSize; i++) {
+                    if (markedBoard[i].every(val => val !== -1)) linesToCheck.add(`row-${i}`);
+                    if (markedBoard.every(row => row[i] !== -1)) linesToCheck.add(`col-${i}`);
+                }
+                let diag1 = true,
+                    diag2 = true;
+                for (let i = 0; i < gridSize; i++) {
+                    if (markedBoard[i][i] === -1) diag1 = false;
+                    if (markedBoard[i][gridSize - 1 - i] === -1) diag2 = false;
+                }
+                if (diag1) linesToCheck.add('diag-1');
+                if (diag2) linesToCheck.add('diag-2');
+
+                let newLinesFound = false;
+                linesToCheck.forEach(lineId => {
+                    if (!completedLines.has(lineId)) {
+                        completedLines.add(lineId);
+                        newLinesFound = true;
+                    }
+                });
+                if (newLinesFound) {
+                    updateBingoLettersDisplay();
+                    drawWinningLines();
+                }
+
+                const requiredLines = getRequiredLinesToWin(gridSize);
+                if (completedLines.size >= requiredLines) {
+                    gameActive = false;
+                    turnIndicator.classList.add('hidden');
+                    lostBtn.classList.add('hidden');
+
+                    // *** SHOW THE MAIN END-GAME BUTTONS ***
+                    rematchBtnMain.classList.remove('hidden');
+                    mainMenuBtnMain.classList.remove('hidden');
+
+                    startConfetti();
+                    winOverlay.classList.remove('hidden');
+                    return true;
+                }
+                return false;
+            }
+
+            function updateBingoLettersDisplay() {
+                const requiredLines = getRequiredLinesToWin(gridSize);
+                const bingoCount = Math.min(completedLines.size, requiredLines);
+
+                bingoLetters.forEach((letter, index) => {
+                    const spanId = `${letter}-${index}`;
+                    const span = bingoLetterSpans[spanId];
+                    if (span) {
+                        if (index < bingoCount) {
+                            span.classList.add('achieved');
+                        } else {
+                            span.classList.remove('achieved');
+                        }
+                    }
+                });
+            }
+
+            function drawWinningLines() {
+                const lineContainer = document.getElementById('line-container');
+                if (!lineContainer) return;
+                lineContainer.innerHTML = '';
+                completedLines.forEach(lineId => {
+                    const line = document.createElement('div');
+                    const [type, indexStr] = lineId.split('-');
+                    if (type === 'row') {
+                        line.className = 'line line-row';
+                        line.style.top = `${((parseInt(indexStr) + 0.5) / gridSize) * 100}%`;
+                    } else if (type === 'col') {
+                        line.className = 'line line-col';
+                        line.style.left = `${((parseInt(indexStr) + 0.5) / gridSize) * 100}%`;
+                    } else if (type === 'diag') {
+                        line.className = `line line-diag line-diag-${indexStr}`;
+                    }
+                    lineContainer.appendChild(line);
+                });
+            }
+
+            function triggerConfetti() {
+                const colors = ["#ffc107", "#28a745", "#007bff", "#6f42c1", "#ff6b6b", "#e83e8c"];
+                for (let i = 0; i < 25; i++) {
+                    const p = document.createElement('div');
+                    p.classList.add('confetti');
+                    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    p.style.left = `${Math.random() * 100}vw`;
+                    p.style.animationDelay = `${Math.random() * 3}s`;
+                    effectsContainer.appendChild(p);
+                    setTimeout(() => p.remove(), 5000);
+                }
+            }
+
+            function startConfetti() {
+                stopConfetti();
+                triggerConfetti();
+                confettiInterval = setInterval(triggerConfetti, 1500);
+            }
+
+            function stopConfetti() {
+                clearInterval(confettiInterval);
+                confettiInterval = null;
+            }
+
+            function resetBoardState() {
+                winOverlay.classList.add('hidden');
+                lostOverlay.classList.add('hidden');
+                gameActive = false;
+                markedBoard = Array(gridSize).fill(null).map(() => Array(gridSize).fill(-1));
+                completedLines = new Set();
+                currentPlayerIndex = 0;
+                stopConfetti();
+                effectsContainer.innerHTML = '';
+                const lineContainer = document.getElementById('line-container');
+                if (lineContainer) lineContainer.innerHTML = '';
+                updateBingoLettersDisplay();
+            }
+
+            function resetFullGame() {
+                resetBoardState();
+                players = [];
+                playerCount = 0;
+                gridSize = 5;
+            }
+
+            function goToMainMenu() {
+                resetFullGame();
+                gameContainer.classList.add('hidden');
+                setupModal.classList.remove('hidden');
+                playerCountScreen.classList.remove('hidden');
+                gametypeSelectScreen.classList.add('hidden');
+                playerSetupScreen.classList.add('hidden');
+                gametypeSelectScreen.querySelectorAll('.btn-gametype').forEach(btn => btn.classList.remove('active'));
+                gametypeSelectScreen.querySelector('.btn-gametype[data-size="5"]').classList.add('active');
             }
         });
-
-        function promptPlayerColor(index) {
-            colorPrompt.textContent = `Player ${index + 1}, Choose Your Color`;
-            colorPalette.innerHTML = '';
-            
-            AVAILABLE_COLORS.forEach(color => {
-                const swatch = document.createElement('div');
-                swatch.classList.add('color-swatch');
-                swatch.style.backgroundColor = color;
-                
-                if (playerColors.includes(color)) {
-                    swatch.classList.add('taken');
-                } else {
-                    swatch.addEventListener('click', () => {
-                        playerColors[index] = color;
-                        if (index + 1 < playerCount) {
-                            promptPlayerColor(index + 1);
-                        } else {
-                            setupModal.classList.add('hidden');
-                            gameContainer.classList.remove('hidden');
-                            startNewGame();
-                        }
-                    }, { once: true });
-                }
-                colorPalette.appendChild(swatch);
-            });
-        }
-
-        // --- Game Logic ---
-        newGameBtn.addEventListener('click', goToMainMenu);
-        fillBtn.addEventListener('click', fillCard);
-
-        function initializeBoard() {
-            boardElement.querySelectorAll('.cell').forEach(cell => cell.remove());
-            for (let i = 0; i < 25; i++) {
-                const cell = document.createElement('div');
-                cell.classList.add('cell');
-                const cellContent = document.createElement('div');
-                cellContent.classList.add('cell-content');
-                cellContent.appendChild(document.createElement('span'));
-                cell.appendChild(cellContent);
-                boardElement.appendChild(cell);
-            }
-        }
-        
-        function startNewGame() {
-            resetGameState();
-            initializeBoard();
-            fillBtn.classList.remove('hidden');
-            turnIndicator.classList.add('hidden');
-        }
-
-        function fillCard() {
-            const numbers = Array.from({ length: 25 }, (_, i) => i + 1);
-            for (let i = numbers.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
-            }
-
-            const cells = boardElement.querySelectorAll('.cell');
-            cells.forEach((cell, i) => {
-                const row = Math.floor(i / 5), col = i % 5;
-                cell.dataset.row = row;
-                cell.dataset.col = col;
-                cell.querySelector('span').textContent = numbers[i];
-                cell.addEventListener('click', handleCellClick);
-            });
-
-            gameActive = true;
-            fillBtn.classList.add('hidden');
-            turnIndicator.classList.remove('hidden');
-            updateTurnIndicator();
-        }
-
-        function handleCellClick(event) {
-            if (!gameActive) return;
-            const cell = event.currentTarget;
-            const row = parseInt(cell.dataset.row), col = parseInt(cell.dataset.col);
-
-            if (markedBoard[row][col] !== -1) return;
-
-            markedBoard[row][col] = currentPlayerIndex;
-            cell.classList.add('marked');
-            cell.style.backgroundColor = playerColors[currentPlayerIndex];
-
-            if (updateGameStatus()) return;
-
-            currentPlayerIndex = (currentPlayerIndex + 1) % playerCount;
-            updateTurnIndicator();
-        }
-        
-        function updateTurnIndicator() {
-            turnIndicator.textContent = `Player ${currentPlayerIndex + 1}'s Turn`;
-            turnIndicator.style.backgroundColor = playerColors[currentPlayerIndex];
-        }
-
-        function updateGameStatus() {
-            const linesToCheck = new Set();
-            for (let i = 0; i < 5; i++) { if (markedBoard[i].every(val => val !== -1)) linesToCheck.add(`row-${i}`); }
-            for (let j = 0; j < 5; j++) { if (markedBoard.every(row => row[j] !== -1)) linesToCheck.add(`col-${j}`); }
-            if (markedBoard.every((row, idx) => row[idx] !== -1)) linesToCheck.add('diag-1');
-            if (markedBoard.every((row, idx) => row[4 - idx] !== -1)) linesToCheck.add('diag-2');
-            
-            linesToCheck.forEach(lineId => completedLines.add(lineId));
-
-            updateBingoLettersDisplay();
-            drawWinningLines();
-
-            if (completedLines.size >= 5) {
-                gameActive = false;
-                messageBox.textContent = 'BINGO! Game Over! 🏆';
-                messageBox.style.color = 'var(--line-color)';
-                turnIndicator.classList.add('hidden');
-                startContinuousFireworks();
-                return true;
-            }
-            return false;
-        }
-
-        function updateBingoLettersDisplay() {
-            const bingoCount = completedLines.size;
-            BINGO_LETTERS.forEach((letter, index) => {
-                const span = bingoLetterSpans[letter];
-                if (index < bingoCount) {
-                    span.classList.add('achieved');
-                } else {
-                    span.classList.remove('achieved');
-                }
-            });
-        }
-        
-        function drawWinningLines() {
-            lineContainer.innerHTML = '';
-            completedLines.forEach(lineId => {
-                const line = document.createElement('div');
-                line.classList.add('line');
-                if (lineId.startsWith('row')) line.classList.add('line-row', `line-${lineId}`);
-                if (lineId.startsWith('col')) line.classList.add('line-col', `line-${lineId}`);
-                if (lineId.startsWith('diag')) line.classList.add('line-diag', `line-${lineId}`);
-                lineContainer.appendChild(line);
-            });
-        }
-        
-        function triggerFireworks(){const c=["#ffc107","#28a745","#007bff","#6f42c1"];for(let i=0;i<20;i++){const p=document.createElement("div");p.classList.add("firework");p.style.background=c[Math.floor(Math.random()*c.length)];p.style.left=`${Math.random()*100}%`;p.style.top=`${Math.random()*100}%`;fireworksContainer.appendChild(p);setTimeout(()=>p.remove(),1e3)}}
-        function startContinuousFireworks(){triggerFireworks();fireworksInterval=setInterval(triggerFireworks,800)}
-        function stopContinuousFireworks(){clearInterval(fireworksInterval);fireworksInterval=null;fireworksContainer.innerHTML=""}
-
-        function resetGameState() {
-            gameActive = false;
-            markedBoard = Array(5).fill(null).map(() => Array(5).fill(-1));
-            completedLines = new Set();
-            currentPlayerIndex = 0;
-            stopContinuousFireworks();
-            lineContainer.innerHTML = '';
-            messageBox.textContent = '';
-            updateBingoLettersDisplay();
-        }
-
-        function goToMainMenu() {
-            resetGameState();
-            gameContainer.classList.add('hidden');
-            setupModal.classList.remove('hidden');
-            playerCountScreen.classList.remove('hidden');
-            colorSelectScreen.classList.add('hidden');
-        }
-    });
-</script>
-
+    </script>
 </body>
+
 </html>
