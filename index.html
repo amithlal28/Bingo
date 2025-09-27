@@ -65,6 +65,7 @@
             gap: 8px;
             margin: 0 auto 1.5rem;
             position: relative; /* Crucial for positioning the lines */
+            z-index: 0; /* Establish a stacking context */
         }
         
         .cell {
@@ -76,6 +77,7 @@
             background-color: #fff;
             cursor: pointer;
             transition: background-color 0.3s, color 0.3s;
+            /* No explicit z-index needed here, lines will be above it */
         }
         
         .cell-content {
@@ -86,15 +88,24 @@
             align-items: center;
             font-size: clamp(1rem, 5vw, 1.5rem);
             font-weight: 500;
+            /* No explicit z-index needed here either */
+        }
+        .cell-content span {
+            /* This span holds the number */
+            position: relative; 
         }
 
         .cell.marked { background-color: var(--primary-color); color: white; }
+        /* The cross is a pseudo-element of .cell-content to be on top of the number */
         .cell.marked .cell-content::after {
             content: '✕';
             position: absolute;
             color: rgba(255, 255, 255, 0.7);
             line-height: 1;
             font-size: clamp(2.5rem, 10vw, 3.5rem);
+            z-index: 1; /* Cross above number, but below the line-container (which is z-index: 2) */
+            /* This z-index is relative to the .cell-content. */
+            /* The overall effect is that the line appears above the entire cell. */
         }
         
         .controls {
@@ -135,12 +146,18 @@
         .hidden { display: none; }
 
         /* --- Winning Line CSS --- */
-        #line-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        #line-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; /* Allow clicks to pass through to cells */
+            z-index: 2; /* **FIX**: Lines are now clearly above all cells and their content */
+        }
         .line {
             position: absolute;
             background-color: var(--line-color);
             border-radius: 4px;
             box-shadow: 0 0 8px rgba(0,0,0,0.5);
+            /* z-index is handled by #line-container */
         }
         /* Horizontal Lines */
         .line-row { left: -5%; width: 110%; height: 5px; }
@@ -195,7 +212,6 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // DOM Elements
         const boardElement = document.getElementById('game-board');
         const lineContainer = document.getElementById('line-container');
         const newGameBtn = document.getElementById('btn-new-game');
@@ -210,39 +226,29 @@
             O: document.getElementById('letter-O'),
         };
 
-        // Game State
         let markedBoard = Array(5).fill(null).map(() => Array(5).fill(false));
         let completedLines = new Set();
         let gameActive = false;
         let fireworksInterval = null;
         const BINGO_LETTERS = ['B', 'I', 'N', 'G', 'O'];
 
-        // Event Listeners
         newGameBtn.addEventListener('click', startNewGame);
         fillBtn.addEventListener('click', fillCard);
         clearBtn.addEventListener('click', clearGame);
         lostBtn.addEventListener('click', handleGameLost);
 
-        function initializeBoard(addListeners = false) {
-            // Clear board but keep line container
-            while (boardElement.firstChild !== lineContainer) {
-                boardElement.removeChild(boardElement.firstChild);
-            }
-            for (let i = 0; i < 5; i++) {
-                for (let j = 0; j < 5; j++) {
-                    const cell = document.createElement('div');
-                    cell.classList.add('cell');
-                    cell.dataset.row = i; cell.dataset.col = j;
-                    
-                    const cellContent = document.createElement('div');
-                    cellContent.classList.add('cell-content');
-                    cell.appendChild(cellContent);
-
-                    if (addListeners) {
-                        cell.addEventListener('click', handleCellClick);
-                    }
-                    boardElement.appendChild(cell);
-                }
+        function initializeBoard() {
+            boardElement.querySelectorAll('.cell').forEach(cell => cell.remove());
+            
+            for (let i = 0; i < 25; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                const cellContent = document.createElement('div');
+                cellContent.classList.add('cell-content');
+                const numberSpan = document.createElement('span'); 
+                cellContent.appendChild(numberSpan);
+                cell.appendChild(cellContent);
+                boardElement.appendChild(cell);
             }
         }
         
@@ -259,11 +265,15 @@
                 [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
             }
 
-            initializeBoard(true);
-            const cells = Array.from(boardElement.children).filter(el => el.classList.contains('cell'));
-            for (let i = 0; i < 25; i++) {
-                cells[i].querySelector('.cell-content').textContent = numbers[i];
-            }
+            const cells = boardElement.querySelectorAll('.cell');
+            cells.forEach((cell, i) => {
+                const row = Math.floor(i / 5);
+                const col = i % 5;
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+                cell.querySelector('.cell-content span').textContent = numbers[i];
+                cell.addEventListener('click', handleCellClick);
+            });
 
             gameActive = true;
             fillBtn.classList.add('hidden');
@@ -289,6 +299,7 @@
             gameActive = false;
             clearBtn.disabled = false;
             lostBtn.disabled = true;
+            stopContinuousFireworks();
         }
         
         function checkForBingo() {
@@ -341,7 +352,7 @@
 
         function triggerFireworks() {
             const colors = ['#ffc107', '#dc3545', '#28a745', '#1a73e8'];
-            for (let i = 0; i < 20; i++) { // Reduced count for better performance in a loop
+            for (let i = 0; i < 20; i++) { 
                 const particle = document.createElement('div');
                 particle.classList.add('firework');
                 particle.style.background = colors[Math.floor(Math.random() * colors.length)];
@@ -353,7 +364,7 @@
         }
 
         function startContinuousFireworks() {
-            triggerFireworks(); // Initial burst
+            triggerFireworks();
             fireworksInterval = setInterval(triggerFireworks, 800);
         }
 
@@ -369,7 +380,7 @@
             gameActive = false;
             stopContinuousFireworks();
             lineContainer.innerHTML = '';
-            initializeBoard(false);
+            initializeBoard();
             messageBox.textContent = '';
             fillBtn.classList.add('hidden');
             newGameBtn.disabled = false;
@@ -378,9 +389,8 @@
             Object.values(bingoLetterSpans).forEach(span => span.classList.remove('achieved'));
         }
 
-        // Initial setup
         lostBtn.disabled = true;
-        initializeBoard(false);
+        initializeBoard();
     });
 </script>
 
