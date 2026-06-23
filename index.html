@@ -117,7 +117,7 @@
         .md p{font-size:.68rem;color:var(--t3);}
 
         /* BINGO Letters */
-        .ltrs{display:flex;justify-content:center;gap:4px;margin-bottom:4px;}
+        .ltrs{display:flex;justify-content:center;gap:6px;margin-bottom:8px;}
         .lt{width:28px;height:28px;border-radius:6px;background:var(--srf2);border:1px solid var(--brd);
             display:flex;justify-content:center;align-items:center;font-size:.85rem;font-weight:900;color:var(--t3);
             transition:all .4s cubic-bezier(.175,.885,.32,1.275);}
@@ -125,11 +125,11 @@
             box-shadow:0 0 12px rgba(251,191,36,0.5);transform:scale(1.1);}
 
         /* Turn bar */
-        .turn{padding:5px 12px;border-radius:8px;font-size:.75rem;font-weight:700;text-align:center;
-            margin-bottom:4px;color:white;box-shadow:var(--sh-s);}
+        .turn{padding:6px 14px;border-radius:8px;font-size:.78rem;font-weight:700;text-align:center;
+            margin-bottom:8px;color:white;box-shadow:var(--sh-s);}
 
         /* Called number */
-        .called-num{text-align:center;margin-bottom:4px;min-height:36px;display:flex;align-items:center;justify-content:center;gap:8px;}
+        .called-num{text-align:center;margin-bottom:8px;min-height:38px;display:flex;align-items:center;justify-content:center;gap:8px;}
         .called-badge{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;
             border-radius:10px;font-size:1rem;font-weight:900;color:white;
             box-shadow:var(--sh-m);animation:popNum .35s cubic-bezier(.175,.885,.32,1.275);}
@@ -151,7 +151,7 @@
         /* Boards layout */
         .boards-row{display:flex;gap:0.5rem;justify-content:center;align-items:center;flex-wrap:nowrap;flex:1;min-height:0;padding:0;}
         .board-col{display:flex;flex-direction:column;align-items:center;min-width:0;}
-        .board-label{font-size:.8rem;font-weight:800;color:var(--t1);margin-bottom:4px;display:flex;align-items:center;gap:5px;}
+        .board-label{font-size:.85rem;font-weight:800;color:var(--t1);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
         .board-label .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
         .bwrap{background:var(--srf2);border-radius:10px;padding:4px;border:1px solid var(--brd);position:relative;
             width:var(--board-size,300px);height:var(--board-size,300px);margin:0 auto;}
@@ -174,8 +174,8 @@
         .ll{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:8;}
         @keyframes drawSvgLine{to{stroke-dashoffset:0;}}
 
-        .ctrls{display:flex;gap:5px;}
-        .ctrls button{flex:1;padding:7px;font-size:.75rem;border-radius:8px;font-weight:700;}
+        .ctrls{display:flex;gap:6px;}
+        .ctrls button{flex:1;padding:8px;font-size:.78rem;border-radius:8px;font-weight:700;}
 
         /* Overlay */
         .ov{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,14,23,0.85);
@@ -285,7 +285,7 @@
             <div class="turn" id="g-tu">Your Turn</div>
 
             <!-- Controls at TOP -->
-            <div class="ctrls" style="margin-bottom:.6rem;">
+            <div class="ctrls" style="margin-bottom:8px;">
                 <button class="bs" id="b-fill" style="margin:0;">Fill Card</button>
                 <button class="bp" id="b-start" style="margin:0;">Start</button>
                 <button class="bs hidden" id="b-clr" style="margin:0;">Clear</button>
@@ -351,7 +351,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     try{if(CG.s)CG.s.game.sdkGameLoadingStop();}catch(e){}
     const $=id=>document.getElementById(id);
     const LT=['B','I','N','G','O'];
-    const CL=['#818cf8','#22d3ee','#34d399','#fbbf24','#fb923c','#c084fc'];
+    const CL=['#ef4444','#3b82f6','#22c55e','#f59e0b','#a855f7','#ec4899'];
     const BG_CL=['#00e5ff','#a855f7','#f43f5e','#fbbf24','#34d399','#818cf8'];
 
     /* Background Animation */
