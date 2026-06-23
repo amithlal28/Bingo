@@ -485,8 +485,25 @@ const A={c:null,m:false,cgMuted:false,
 };
 
 /* CrazyGames */
-const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK){this.s=window.CrazyGames.SDK;
-    try{if(this.s.game&&this.s.game.addSettingsChangeListener){this.s.game.addSettingsChangeListener(s=>{A.cgMuted=!!s.muteAudio;});}}catch(e){}}},
+const CG={s:null,init(){
+    if(window.CrazyGames&&window.CrazyGames.SDK){
+        this.s=window.CrazyGames.SDK;
+        try{if(this.s.game&&this.s.game.addSettingsChangeListener){this.s.game.addSettingsChangeListener(s=>{A.cgMuted=!!s.muteAudio;});}}catch(e){}
+        try{
+            if(this.s.user) {
+                this.s.user.getUser().then(user => {
+                    if(user && user.username) {
+                        const mn = document.getElementById('menu-name');
+                        if(mn && (!mn.value || !localStorage.getItem('bingo_name'))) {
+                            mn.value = user.username;
+                            localStorage.setItem('bingo_name', user.username);
+                        }
+                    }
+                }).catch(()=>{});
+            }
+        }catch(e){}
+    }
+},
     gs(){try{this.s&&this.s.game.gameplayStart();}catch(e){}},
     gp(){try{this.s&&this.s.game.gameplayStop();}catch(e){}},
     ad(cb){if(cb)cb();},
