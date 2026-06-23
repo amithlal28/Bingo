@@ -1006,6 +1006,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         if(isLocalReady && isOpponentReady) {
             $('b-start').classList.add('hidden');
             $('b-fill').classList.add('hidden');
+            document.querySelector('.ctrls').classList.remove('online-setup');
             active=true;
             curP = isHost ? 0 : 1;
             showTurn();
