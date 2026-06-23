@@ -178,7 +178,7 @@
         .ctrls button{flex:1;padding:8px;font-size:.78rem;border-radius:8px;font-weight:700;}
         
         /* Online Setup Overlay Controls */
-        body:not(.game-active) .ctrls.online-setup {
+        .ctrls.online-setup {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -196,14 +196,14 @@
             border-radius: 20px;
             border: 1px solid var(--brd2);
         }
-        body:not(.game-active) .ctrls.online-setup button {
+        .ctrls.online-setup button {
             padding: 16px;
             font-size: 1.15rem;
             border-radius: 12px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.5);
             transition: all 0.2s;
         }
-        body:not(.game-active) .ctrls.online-setup button:hover {
+        .ctrls.online-setup button:hover {
             transform: translateY(-2px) scale(1.02);
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
@@ -281,6 +281,15 @@
         
         <div id="sf-random" class="hidden" style="margin-bottom: .6rem; text-align:center;">
             <p style="color:var(--t2);font-size:.9rem;margin-bottom:.5rem;">Matchmaking will start automatically when you click Find Match.</p>
+            <div style="margin-bottom:10px; text-align:left;">
+                <label class="ol">Game Type</label>
+                <select id="rnd-type" style="width:100%;background:var(--srf2);border:1.5px solid var(--brd);padding:7px;border-radius:8px;color:white;font-size:.85rem;outline:none;">
+                    <option value="any">Any Size</option>
+                    <option value="5">5×5</option>
+                    <option value="6">6×6</option>
+                    <option value="7">7×7</option>
+                </select>
+            </div>
             <div id="rnd-status" style="font-size: 0.9rem; font-weight: 700; color: var(--ind);">Ready to search.</div>
         </div>
 
@@ -605,7 +614,17 @@ document.addEventListener('DOMContentLoaded',()=>{
         if(peer) peer.destroy();
         peer = new Peer();
         peer.on('open', id => {
-            const c = peer.connect('bingofest-lobby-' + randomLobbyIdx);
+            let type = $('rnd-type').value;
+            let searchGs;
+            if(type === 'any') {
+                const sizes = [5,6,7];
+                searchGs = sizes[randomLobbyIdx % 3]; 
+            } else {
+                searchGs = type;
+            }
+            const lobbyName = 'bingofest-lobby-' + searchGs + '-' + randomLobbyIdx;
+            
+            const c = peer.connect(lobbyName);
             
             c.on('open', () => {
                 c.send({type: 'request_join', guestName:$('inp').value.trim()||'Player 2', guestColor:selC});
@@ -657,7 +676,15 @@ document.addEventListener('DOMContentLoaded',()=>{
         $('rnd-status').style.color = 'var(--amb)';
         
         if(peer) peer.destroy();
-        peer = new Peer('bingofest-lobby-' + idx);
+        
+        let type = $('rnd-type').value;
+        let hostGs;
+        if(type === 'any') hostGs = [5,6,7][Math.floor(Math.random()*3)];
+        else hostGs = type;
+        
+        gs = parseInt(hostGs); // Set the global gs
+        
+        peer = new Peer('bingofest-lobby-' + gs + '-' + idx);
         
         peer.on('open', id => {});
         
