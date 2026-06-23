@@ -253,6 +253,10 @@
     <!-- MENU -->
     <div id="s-menu">
         <h1 class="title">Bingo Festival</h1>
+        <div style="margin-bottom: 15px; background: var(--srf); padding: 12px; border-radius: 12px; border: 1px solid var(--brd);">
+            <label class="ol" for="menu-name">Your Name</label>
+            <input type="text" id="menu-name" placeholder="Enter your name" maxlength="15" style="width: 100%; text-align: center; background:var(--srf2); border:1.5px solid var(--brd); padding:7px; border-radius:8px; color:white; font-size:1rem; outline:none; margin-top:0.4rem;">
+        </div>
         <div class="mc" data-m="solo"><div class="mi">🤖</div><div class="md"><h3>Solo vs AI</h3><p>Call numbers to race for BINGO against bots.</p></div></div>
         <div class="mc" data-m="local"><div class="mi">👥</div><div class="md"><h3>Pass & Play</h3><p>Play with friends on the same device.</p></div></div>
         <div class="mc" data-m="online"><div class="mi">🌐</div><div class="md"><h3>Online Room Match</h3><p>Play against a friend using a room code.</p></div></div>
@@ -386,13 +390,17 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     ad(cb){if(!this.s||!this.s.ad){if(cb)cb();return;}try{const w=A.m;this.s.ad.requestAd("midgame",{adStarted:()=>{A.m=true;},adFinished:()=>{A.m=w;if(cb)cb();},adError:()=>{A.m=w;if(cb)cb();}});}catch(e){if(cb)cb();}}
 };
 
-document.addEventListener('DOMContentLoaded',()=>{
+    document.addEventListener('DOMContentLoaded',()=>{
     A.init();CG.init();
     try{if(CG.s)CG.s.game.sdkGameLoadingStop();}catch(e){}
     const $=id=>document.getElementById(id);
     const LT=['B','I','N','G','O'];
     const CL=['#eab308','#22c55e','#3b82f6','#f97316','#a855f7','#8b5cf6','#d97706','#f8fafc','#ec4899','#06b6d4'];
     const BG_CL=['#00e5ff','#a855f7','#f43f5e','#fbbf24','#34d399','#818cf8'];
+
+    const savedName = localStorage.getItem('bingo_name');
+    if(savedName && $('menu-name')) $('menu-name').value = savedName;
+    if($('menu-name')) $('menu-name').addEventListener('input', e => localStorage.setItem('bingo_name', e.target.value));
 
     /* Background Animation */
     const cvs=$('bg-canvas'), ctx=cvs.getContext('2d');
@@ -465,6 +473,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Per-player: { name, color, isAI, nums[], board[][], lines:Set, numMap:{num->idx}, ltrEls[], cellEls[], linesEl, gridEl, wrapEl }
     let pd=[];
     let active=false,filled=false,curP=0,confT=null,setupP=0;
+    let wasRandom=false;
+
+    const FANCY_NAMES = ['Cosmic', 'Nebula', 'Nova', 'Pulsar', 'Quasar', 'Stellar', 'Astro', 'Comet', 'Galaxy', 'Meteor'];
+    function getRandomName() { return FANCY_NAMES[Math.floor(Math.random()*FANCY_NAMES.length)] + ' ' + Math.floor(Math.random()*1000); }
+    let defaultFancyName = getRandomName();
 
     document.querySelectorAll('.mc').forEach(c=>{c.addEventListener('click',()=>{A.p('click');mode=c.dataset.m;openSetup();});});
     $('hb-s').addEventListener('click',()=>A.tog());
@@ -501,6 +514,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             $('bn').textContent='Find Match';
             sIdx=0; players=[];
             isHost = false;
+            wasRandom = true;
             if(peer) { peer.destroy(); peer=null; }
             conn=null;
             $('rnd-status').textContent='Ready to search.';
@@ -511,8 +525,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     
     function setupOnlineUI(){
         const bH=$('btn-host'), bJ=$('btn-join');
-        bH.onclick=()=>{ A.p('click'); isHost=true; bH.classList.add('on'); bJ.classList.remove('on'); $('ol-host-ui').classList.remove('hidden'); $('ol-join-ui').classList.add('hidden'); $('sf-grid').classList.remove('hidden'); $('bn').textContent='Start Match'; $('inp').value='Player 1'; initPeer(); };
-        bJ.onclick=()=>{ A.p('click'); isHost=false; bJ.classList.add('on'); bH.classList.remove('on'); $('ol-join-ui').classList.remove('hidden'); $('ol-host-ui').classList.add('hidden'); $('sf-grid').classList.add('hidden'); $('bn').textContent='Connect & Join'; $('inp').value='Player 2'; if(peer) peer.destroy(); peer=null; conn=null; $('ol-status').style.display='none'; };
+        bH.onclick=()=>{ A.p('click'); isHost=true; wasRandom=false; bH.classList.add('on'); bJ.classList.remove('on'); $('ol-host-ui').classList.remove('hidden'); $('ol-join-ui').classList.add('hidden'); $('sf-grid').classList.remove('hidden'); $('bn').textContent='Start Match'; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; initPeer(); };
+        bJ.onclick=()=>{ A.p('click'); isHost=false; wasRandom=false; bJ.classList.add('on'); bH.classList.remove('on'); $('ol-join-ui').classList.remove('hidden'); $('ol-host-ui').classList.add('hidden'); $('sf-grid').classList.add('hidden'); $('bn').textContent='Connect & Join'; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; if(peer) peer.destroy(); peer=null; conn=null; $('ol-status').style.display='none'; };
         if(isHost===false && $('ol-join-ui').classList.contains('hidden')===false) { /* already join */ } else { bH.click(); }
     }
 
@@ -550,6 +564,17 @@ document.addEventListener('DOMContentLoaded',()=>{
             $('ov-h').className='text-lose';
             $('ov-p').textContent='Your opponent has disconnected.';
             $('ov-bds').innerHTML='';
+            
+            if(wasRandom) {
+                $('b-re').textContent = 'New Match';
+                $('b-re').onclick = () => {
+                    A.p('click');
+                    $('ov').classList.add('hidden');
+                    goMenu();
+                    mode = 'random';
+                    openSetup();
+                };
+            }
         } else {
             alert('Opponent disconnected');
             goMenu();
@@ -615,14 +640,16 @@ document.addEventListener('DOMContentLoaded',()=>{
         peer = new Peer();
         peer.on('open', id => {
             let type = $('rnd-type').value;
-            let searchGs;
+            let searchGs, lobbyName;
             if(type === 'any') {
                 const sizes = [5,6,7];
-                searchGs = sizes[randomLobbyIdx % 3]; 
+                searchGs = sizes[(randomLobbyIdx - 1) % 3]; 
+                const sizeLobbyIdx = Math.ceil(randomLobbyIdx / 3);
+                lobbyName = 'bingofest-lobby-' + searchGs + '-' + sizeLobbyIdx;
             } else {
                 searchGs = type;
+                lobbyName = 'bingofest-lobby-' + searchGs + '-' + randomLobbyIdx;
             }
-            const lobbyName = 'bingofest-lobby-' + searchGs + '-' + randomLobbyIdx;
             
             const c = peer.connect(lobbyName);
             
@@ -660,7 +687,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     function nextLobby() {
         if(!isRandomMatchmaking) return;
         randomLobbyIdx++;
-        if(randomLobbyIdx > MAX_LOBBY) {
+        let maxL = ($('rnd-type').value === 'any') ? MAX_LOBBY * 3 : MAX_LOBBY;
+        if(randomLobbyIdx > maxL) {
             $('rnd-status').textContent = 'No players found.';
             $('rnd-status').style.color = 'var(--ros)';
             resetRandomUI();
@@ -736,7 +764,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     $('g-df').querySelectorAll('.cb').forEach(b=>{b.addEventListener('click',()=>{A.p('click');$('g-df').querySelectorAll('.cb').forEach(x=>x.classList.remove('on'));b.classList.add('on');diff=b.dataset.d;});});
 
     function prm(){
-        $('ln').textContent=`Player ${sIdx+1} Name`;$('inp').value=`Player ${sIdx+1}`;
+        const defaultName = localStorage.getItem('bingo_name') || defaultFancyName;
+        $('ln').textContent=`Player ${sIdx+1} Name`;
+        $('inp').value = (sIdx===0) ? defaultName : getRandomName();
         const p=$('pal');p.innerHTML='';const used=players.map(x=>x.color);selC=null;
         CL.forEach(c=>{const s=document.createElement('div');s.classList.add('sw');s.style.backgroundColor=c;
             if(used.includes(c)){s.classList.add('tk');}else{if(!selC){selC=c;s.classList.add('sel');}
@@ -782,7 +812,6 @@ document.addEventListener('DOMContentLoaded',()=>{
         } else if(mode==='random') {
             if(!peer && !conn) {
                 $('bn').disabled=true;
-                $('bb').disabled=true;
                 $('inp').disabled=true;
                 isRandomMatchmaking = true;
                 randomLobbyIdx = 1;
