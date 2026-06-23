@@ -351,7 +351,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     try{if(CG.s)CG.s.game.sdkGameLoadingStop();}catch(e){}
     const $=id=>document.getElementById(id);
     const LT=['B','I','N','G','O'];
-    const CL=['#06b6d4','#3b82f6','#22c55e','#f59e0b','#a855f7','#ec4899'];
+    const CL=['#eab308','#22c55e','#3b82f6','#f97316','#a855f7','#8b5cf6','#d97706','#f8fafc','#ec4899','#06b6d4'];
     const BG_CL=['#00e5ff','#a855f7','#f43f5e','#fbbf24','#34d399','#818cf8'];
 
     /* Background Animation */
@@ -865,8 +865,8 @@ document.addEventListener('DOMContentLoaded',()=>{
         A.p('mark');
         showCalled(num, players[1].color);
         markNumOnAll(num, 1);
-        const winner=checkAllWin();
-        if(winner!==null){ endGame(players[winner]); return; }
+        const winners=checkAllWin();
+        if(winners!==null){ endGame(winners); return; }
         curP=(curP+1)%players.length;
         showTurn();
     }
@@ -1012,8 +1012,8 @@ document.addEventListener('DOMContentLoaded',()=>{
             markNumOnAll(calledNum, curP);
             conn.send({type:'call', num:calledNum});
             
-            const winner=checkAllWin();
-            if(winner!==null){ endGame(players[winner]); return; }
+            const winners=checkAllWin();
+            if(winners!==null){ endGame(winners); return; }
             
             curP=(curP+1)%players.length;
             showTurn();
@@ -1041,8 +1041,8 @@ document.addEventListener('DOMContentLoaded',()=>{
             conn.send({type:'call', num:calledNum});
         }
 
-        const winner=checkAllWin();
-        if(winner!==null){ endGame(players[winner]); return; }
+        const winners=checkAllWin();
+        if(winners!==null){ endGame(winners); return; }
 
         curP=(curP+1)%players.length;
         showTurn();
@@ -1186,8 +1186,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
 
     function checkAllWin(){
-        for(let i=0;i<pd.length;i++){if(pd[i].lines.size>=gs)return i;}
-        return null;
+        let winners=[];
+        for(let i=0;i<pd.length;i++){if(pd[i].lines.size>=gs)winners.push(i);}
+        return winners.length>0?winners:null;
     }
 
     function recalc(pi){
@@ -1294,15 +1295,22 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
 
     /* End game */
-    function endGame(winner){
+    function endGame(winnerIndices){
         active=false;
         if(turnTimer) { clearInterval(turnTimer); turnTimer = null; }
         pd.forEach(p=>{ if(p.cellEls) p.cellEls.forEach(c=>c.classList.add('off')); });
         CG.gp();
         $('ov').classList.remove('hidden');
-        if(winner.isAI || winner.isOnline){A.p('lose');$('ov-e').textContent='😔';$('ov-h').textContent='Defeat!';$('ov-h').className='text-lose';$('ov-p').textContent=`${winner.name} got BINGO first!`;}
-        else{A.p('win');$('ov-e').textContent='🏆';$('ov-h').textContent='Bingo!';$('ov-h').className='text-win';
-            $('ov-p').textContent=mode==='practice'?'Card cleared!':`Victory for ${winner.name}! 🏆`;}
+        if(winnerIndices.length > 1){
+            A.p('win');$('ov-e').textContent='🤝';$('ov-h').textContent='Tie!';$('ov-h').className='text-win';
+            const names=winnerIndices.map(i=>players[i].name).join(' & ');
+            $('ov-p').textContent=`It's a tie between ${names}!`;
+        } else {
+            const winner=players[winnerIndices[0]];
+            if(winner.isAI || winner.isOnline){A.p('lose');$('ov-e').textContent='😔';$('ov-h').textContent='Defeat!';$('ov-h').className='text-lose';$('ov-p').textContent=`${winner.name} got BINGO first!`;}
+            else{A.p('win');$('ov-e').textContent='🏆';$('ov-h').textContent='Bingo!';$('ov-h').className='text-win';
+                $('ov-p').textContent=mode==='practice'?'Card cleared!':`Victory for ${winner.name}! 🏆`;}
+        }
         startConf();
 
         // Show all boards
