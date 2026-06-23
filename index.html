@@ -591,6 +591,14 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     
     function showDisconnectOverlay() {
         if(window.isQuitting) return;
+        if(!$('ov').classList.contains('hidden') && $('ov-h').textContent !== 'Disconnected') {
+            const reBtn = $('b-re');
+            if(reBtn) {
+                reBtn.textContent = 'Opponent Left';
+                reBtn.disabled = true;
+            }
+            return;
+        }
         if(document.body.classList.contains('game-active')) {
             active = false;
             if(turnTimer) { clearInterval(turnTimer); turnTimer = null; }
@@ -650,12 +658,18 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         } else if(data.type==='ready'){
             isOpponentReady = true;
             if(mode==='online') checkReadyStart();
-        } else if(data.type==='restart'){
-            if(!isHost){
-                $('ov').classList.add('hidden');
-                players[1].name = data.hostName; players[1].color = data.hostColor;
-                launch();
+        } else if(data.type==='rematch_req'){
+            window.opponentRematchReq = true;
+            if(!$('ov').classList.contains('hidden')) {
+                if(!window.localRematchReq) {
+                    $('b-re').textContent = 'Accept Rematch';
+                } else if(isHost) {
+                    conn.send({type:'restart', hostName:players[0].name, hostColor:players[0].color});
+                    $('ov').classList.add('hidden');CG.ad(()=>launch());
+                }
             }
+        } else if(data.type==='restart'){
+            $('ov').classList.add('hidden');CG.ad(()=>launch());
         }
     }
 
@@ -1483,6 +1497,41 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         }
         startConf();
 
+        if(wasRandom) {
+            $('b-re').textContent = 'New Match';
+            $('b-re').disabled = false;
+            $('b-re').onclick = () => {
+                A.p('click');
+                $('ov').classList.add('hidden');
+                goMenu();
+                mode = 'random';
+                openSetup();
+            };
+        } else {
+            window.localRematchReq = false;
+            window.opponentRematchReq = false;
+            $('b-re').textContent = 'Rematch';
+            $('b-re').disabled = false;
+            $('b-re').onclick = () => {
+                A.p('click');
+                if(mode==='online') {
+                    window.localRematchReq = true;
+                    if(window.opponentRematchReq) {
+                        if(isHost) {
+                            conn.send({type:'restart', hostName:players[0].name, hostColor:players[0].color});
+                            $('ov').classList.add('hidden');CG.ad(()=>launch());
+                        }
+                    } else {
+                        $('b-re').textContent = 'Waiting...';
+                        $('b-re').disabled = true;
+                        conn.send({type:'rematch_req'});
+                    }
+                } else {
+                    $('ov').classList.add('hidden');CG.ad(()=>launch());
+                }
+            };
+        }
+
         // Show all boards
         const eb=$('ov-bds');eb.innerHTML='';
         players.forEach((pl,pi)=>{
@@ -1597,12 +1646,6 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         ovCtx.clearRect(0,0,ovCvs.width,ovCvs.height);
     }
 
-    $('b-re').addEventListener('click',()=>{
-        A.p('click');
-        if(mode==='online' && !isHost){ customAlert('Waiting for Host to restart match...'); return; }
-        if(mode==='online' && isHost) conn.send({type:'restart', hostName:players[0].name, hostColor:players[0].color});
-        $('ov').classList.add('hidden');CG.ad(()=>launch());
-    });
     $('b-mm').addEventListener('click',()=>{A.p('click');$('ov').classList.add('hidden');CG.ad(()=>goMenu());});
 
     function goMenu(){
