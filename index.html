@@ -241,6 +241,7 @@
         ::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:4px;}
     </style>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 </head>
 <body>
 <canvas id="bg-canvas"></canvas>
@@ -492,7 +493,9 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     let mode='solo',gs=5,aiN=1,lpN=2,diff='easy';
     let players=[],sIdx=0,selC=null;
     let peer=null, conn=null, isHost=false, roomId='';
-    let searchQueue=[], searchIdx=0, hostAttemptIdx=1, isRandomMatchmaking=false, MAX_LOBBY=100;
+    let isRandomMatchmaking=false;
+    let mqttClient=null, myMqttId='', isMqttHost=false;
+    const PING_TOPIC = 'amithlal28_bingofest_v1/ping', REPLY_TOPIC_PREFIX = 'amithlal28_bingofest_v1/reply/';
     let isLocalReady=false, isOpponentReady=false;
     let turnTimer=null, timeLeft=30;
 
@@ -675,6 +678,9 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
     function resetRandomUI() {
         isRandomMatchmaking = false;
+        isMqttHost = false;
+        clearTimeout(window.pingTimerId);
+        clearTimeout(window.hostTimerId);
         $('bn').disabled=false;
         $('bb').disabled=false;
         $('inp').disabled=false;
@@ -683,102 +689,81 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         conn=null;
     }
 
-    function searchLobby() {
-        if(!isRandomMatchmaking) return;
-        if(searchIdx >= searchQueue.length) {
-            hostAttemptIdx = 1;
-            becomeLobbyHost();
-            return;
-        }
-
-        let lobbySuffix = searchQueue[searchIdx];
-        $('rnd-status').textContent = `Searching...`;
-        $('rnd-status').style.color = 'var(--ind)';
-        
-        if(peer) peer.destroy();
-        peer = new Peer();
-        
-        let hasMovedNext = false;
-        let timeoutId = setTimeout(() => { moveNext(); }, 1000);
-        
-        function moveNext() {
-            if(hasMovedNext) return;
-            hasMovedNext = true;
-            clearTimeout(timeoutId);
-            nextLobby();
-        }
-
-        peer.on('open', id => {
-            const c = peer.connect('bingofest-lobby-' + lobbySuffix);
-            
-            c.on('open', () => {
-                c.send({type: 'request_join', prefType:$('rnd-type').value, guestName:$('inp').value.trim()||'Player 2', guestColor:selC});
+    function initMqtt() {
+        if(!mqttClient) {
+            mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+            mqttClient.on('connect', () => { mqttClient.subscribe(PING_TOPIC); });
+            mqttClient.on('message', (topic, message) => {
+                if(!isRandomMatchmaking) return;
+                try {
+                    const msg = JSON.parse(message.toString());
+                    if(topic === PING_TOPIC) {
+                        if(isMqttHost && !window.mqttMatched) {
+                            let myType = window.hostType;
+                            let theirPref = msg.prefType;
+                            let isCompatible = false;
+                            if(theirPref === 'any') isCompatible = true;
+                            else if(myType === 'any' || myType === theirPref) isCompatible = true;
+                            
+                            if(isCompatible) {
+                                mqttClient.publish(REPLY_TOPIC_PREFIX + msg.id, JSON.stringify({peerId: peer.id, type: myType}));
+                            }
+                        }
+                    } else if(topic.startsWith(REPLY_TOPIC_PREFIX) && !isMqttHost) {
+                        if(window.hasGotReply) return;
+                        window.hasGotReply = true;
+                        clearTimeout(window.pingTimerId);
+                        
+                        $('rnd-status').textContent = 'Match Found! Connecting...';
+                        $('rnd-status').style.color = 'var(--grn)';
+                        
+                        if(peer) peer.destroy();
+                        peer = new Peer();
+                        peer.on('open', () => {
+                            const c = peer.connect(msg.peerId);
+                            c.on('open', () => {
+                                c.send({type: 'request_join', prefType:$('rnd-type').value, guestName:$('inp').value.trim()||'Player 2', guestColor:selC});
+                            });
+                            c.on('data', data => {
+                                if(data.type === 'accept_join') {
+                                    conn = c; setupConn(); isHost = false;
+                                    $('rnd-status').textContent = 'Joining match...';
+                                } else if(data.type === 'reject_join') {
+                                    c.close(); peer.destroy(); startRandomSearch();
+                                }
+                            });
+                            c.on('error', () => { peer.destroy(); startRandomSearch(); });
+                        });
+                        peer.on('error', err => { peer.destroy(); startRandomSearch(); });
+                    }
+                } catch(e){}
             });
-
-            c.on('data', data => {
-                if(data.type === 'accept_join') {
-                    hasMovedNext = true; clearTimeout(timeoutId);
-                    conn = c;
-                    setupConn();
-                    isHost = false;
-                    $('rnd-status').textContent = 'Match Found! Joining...';
-                    $('rnd-status').style.color = 'var(--grn)';
-                } else if(data.type === 'reject_join') {
-                    c.close();
-                    peer.destroy();
-                    moveNext();
-                }
-            });
-            
-            c.on('error', () => { moveNext(); });
-        });
-
-        peer.on('error', err => {
-            peer.destroy();
-            moveNext();
-        });
-    }
-
-    function nextLobby() {
-        if(!isRandomMatchmaking) return;
-        searchIdx++;
-        setTimeout(searchLobby, 300);
+        }
     }
 
     function becomeLobbyHost() {
         if(!isRandomMatchmaking) return;
-        let type = $('rnd-type').value;
-        
-        if(hostAttemptIdx > MAX_LOBBY) {
-            // Keep looping search for ALL types if we run out of host slots (acting as a queue)
-            searchIdx = 0; hostAttemptIdx = 1;
-            $('rnd-status').textContent = 'Servers full. Waiting in queue...';
-            setTimeout(searchLobby, 1000);
-            return;
-        }
-
         $('rnd-status').textContent = `Waiting for opponent...`;
         $('rnd-status').style.color = 'var(--amb)';
-        
         if(peer) peer.destroy();
         
+        let type = $('rnd-type').value;
         window.hostType = type;
         if(type !== 'any') gs = parseInt(type);
         
-        peer = new Peer('bingofest-lobby-' + type + '-' + hostAttemptIdx);
+        let uniquePeerId = 'bingofest-peer-' + Math.random().toString(36).substr(2, 9);
+        peer = new Peer(uniquePeerId);
         
-        peer.on('open', id => {});
+        peer.on('open', id => {
+            isMqttHost = true;
+            window.mqttMatched = false;
+        });
         
-        let isMatched = false;
-        
-        // P2P Matchmaking random walk: If no one joins within 4 to 8 seconds, 
-        // drop the lobby and become a searcher again. This prevents two people 
-        // who searched at the exact same time from both getting stuck as hosts indefinitely.
         let randomHostWait = 4000 + Math.floor(Math.random() * 4000);
         window.hostTimerId = setTimeout(() => {
-            if(!isMatched && isRandomMatchmaking) {
+            if(!window.mqttMatched && isRandomMatchmaking) {
+                isMqttHost = false;
                 if(peer) peer.destroy();
-                $('rnd-status').textContent = `Scanning network...`;
                 startRandomSearch();
             }
         }, randomHostWait);
@@ -789,7 +774,8 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
                     if(conn && conn.open) {
                         c.send({type: 'reject_join'});
                     } else {
-                        isMatched = true;
+                        window.mqttMatched = true;
+                        isMqttHost = false;
                         clearTimeout(window.hostTimerId);
                         conn = c;
                         c.send({type: 'accept_join'});
@@ -827,15 +813,8 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             });
         });
         
-        let hasAttemptedHost = false;
         peer.on('error', err => {
-            if(err.type === 'unavailable-id') {
-                if(hasAttemptedHost) return;
-                hasAttemptedHost = true;
-                clearTimeout(window.hostTimerId);
-                hostAttemptIdx++;
-                setTimeout(becomeLobbyHost, 300);
-            }
+            if(err.type === 'unavailable-id') setTimeout(becomeLobbyHost, 300);
         });
     }
 
@@ -865,19 +844,28 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     function shuffle(n){const a=Array.from({length:n},(_,i)=>i+1);for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
     function startRandomSearch() {
-        let type = $('rnd-type').value;
-        searchQueue = [];
-        if(type === 'any') {
-            for(let i=1; i<=MAX_LOBBY; i++) searchQueue.push(`5-${i}`);
-            for(let i=1; i<=MAX_LOBBY; i++) searchQueue.push(`6-${i}`);
-            for(let i=1; i<=MAX_LOBBY; i++) searchQueue.push(`7-${i}`);
-            for(let i=1; i<=MAX_LOBBY; i++) searchQueue.push(`any-${i}`);
-        } else {
-            for(let i=1; i<=MAX_LOBBY; i++) searchQueue.push(`${type}-${i}`);
-            for(let i=1; i<=MAX_LOBBY; i++) searchQueue.push(`any-${i}`);
-        }
-        searchIdx = 0; hostAttemptIdx = 1;
-        searchLobby();
+        if(!isRandomMatchmaking) return;
+        $('rnd-status').textContent = 'Scanning network...';
+        $('rnd-status').style.color = 'var(--ind)';
+        
+        initMqtt();
+        
+        isMqttHost = false;
+        window.hasGotReply = false;
+        myMqttId = Math.random().toString(36).substr(2, 9);
+        
+        mqttClient.subscribe(REPLY_TOPIC_PREFIX + myMqttId);
+        
+        setTimeout(() => {
+            if(!isRandomMatchmaking || window.hasGotReply) return;
+            mqttClient.publish(PING_TOPIC, JSON.stringify({id: myMqttId, prefType: $('rnd-type').value}));
+            
+            window.pingTimerId = setTimeout(() => {
+                if(!isRandomMatchmaking || window.hasGotReply) return;
+                mqttClient.unsubscribe(REPLY_TOPIC_PREFIX + myMqttId);
+                becomeLobbyHost();
+            }, 1500);
+        }, 100);
     }
 
     $('bn').addEventListener('click',()=>{
