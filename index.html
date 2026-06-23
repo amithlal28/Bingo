@@ -180,19 +180,20 @@
         /* Online Setup Overlay Controls */
         body:not(.game-active) .ctrls.online-setup {
             position: absolute;
-            bottom: 40px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
             width: 85%;
             max-width: 350px;
+            flex-direction: column;
             gap: 15px;
             z-index: 50;
             margin-bottom: 0 !important;
-            padding: 10px;
-            background: rgba(10, 14, 23, 0.4);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border-radius: 16px;
+            padding: 24px;
+            background: rgba(10, 14, 23, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
             border: 1px solid var(--brd2);
         }
         body:not(.game-active) .ctrls.online-setup button {
@@ -524,7 +525,26 @@ document.addEventListener('DOMContentLoaded',()=>{
     
     function setupConn(){
         conn.on('data', data => handleOnlineMsg(data));
-        conn.on('close', ()=>{ alert('Opponent disconnected'); goMenu(); });
+        conn.on('close', ()=>{ showDisconnectOverlay(); });
+    }
+    
+    function showDisconnectOverlay() {
+        if(document.body.classList.contains('game-active')) {
+            active = false;
+            if(turnTimer) { clearInterval(turnTimer); turnTimer = null; }
+            pd.forEach(p=>{ if(p.cellEls) p.cellEls.forEach(c=>c.classList.add('off')); });
+            CG.gp();
+            $('ov').classList.remove('hidden');
+            A.p('lose');
+            $('ov-e').textContent='🔌';
+            $('ov-h').textContent='Disconnected';
+            $('ov-h').className='text-lose';
+            $('ov-p').textContent='Your opponent has disconnected.';
+            $('ov-bds').innerHTML='';
+        } else {
+            alert('Opponent disconnected');
+            goMenu();
+        }
     }
 
     function handleOnlineMsg(data){
