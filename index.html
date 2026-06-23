@@ -504,28 +504,39 @@ const CG={s:null,init(){
         }catch(e){}
     }
 },
-    gs(){try{this.s&&this.s.game.gameplayStart();}catch(e){}},
-    gp(){try{this.s&&this.s.game.gameplayStop();}catch(e){}},
+    gs(){try{if(window.CrazyGames&&window.CrazyGames.SDK)window.CrazyGames.SDK.game.gameplayStart();}catch(e){}},
+    gp(){try{if(window.CrazyGames&&window.CrazyGames.SDK)window.CrazyGames.SDK.game.gameplayStop();}catch(e){}},
     ad(cb){if(cb)cb();},
-    updateRoom(rid,open){try{this.s&&this.s.game.updateRoom&&this.s.game.updateRoom({room:rid,isJoinable:open,inviteParams:{roomId:rid}});}catch(e){}},
-    showInvite(rid){try{this.s&&this.s.game.showInviteButton&&this.s.game.showInviteButton({roomId:rid});}catch(e){}},
-    hideInvite(){try{this.s&&this.s.game.hideInviteButton&&this.s.game.hideInviteButton();}catch(e){}},
+    updateRoom(rid,open){try{if(window.CrazyGames&&window.CrazyGames.SDK)window.CrazyGames.SDK.game.updateRoom({room:rid,isJoinable:open,inviteParams:{roomId:rid}});}catch(e){}},
+    showInvite(rid){try{if(window.CrazyGames&&window.CrazyGames.SDK)window.CrazyGames.SDK.game.showInviteButton({roomId:rid});}catch(e){}},
+    hideInvite(){try{if(window.CrazyGames&&window.CrazyGames.SDK)window.CrazyGames.SDK.game.hideInviteButton();}catch(e){}},
     async getInviteRoomId(){
         try{
-            if(this.s&&this.s.game.getInviteParam){
-                const v=this.s.game.getInviteParam('roomId');
+            if(window.CrazyGames&&window.CrazyGames.SDK&&window.CrazyGames.SDK.game.getInviteParam){
+                const v=window.CrazyGames.SDK.game.getInviteParam('roomId');
                 const resolved = (v && typeof v.then === 'function') ? await v : v;
                 if(resolved) return resolved;
             }
         }catch(e){}
         return new URLSearchParams(window.location.search).get('roomId');
     },
-    isInstant(){try{return !!(this.s&&this.s.game.isInstantMultiplayer);}catch(e){}return false;}
+    isInstant(){try{return !!(window.CrazyGames&&window.CrazyGames.SDK&&window.CrazyGames.SDK.game.isInstantMultiplayer);}catch(e){}return false;},
+    initRoomJoinListener(){
+        try{
+            if(window.CrazyGames&&window.CrazyGames.SDK&&window.CrazyGames.SDK.game.addRoomJoinListener){
+                window.CrazyGames.SDK.game.addRoomJoinListener(e => {
+                    if(e.inviteParams && e.inviteParams.roomId) {
+                        window.location.href = window.location.href.split('?')[0] + '?roomId=' + e.inviteParams.roomId;
+                    }
+                });
+            }
+        }catch(e){}
+    }
 };
 
     document.addEventListener('DOMContentLoaded',()=>{
-    A.init();CG.init();
-    try{if(CG.s)CG.s.game.sdkGameLoadingStop();}catch(e){}
+    A.init();CG.init();CG.initRoomJoinListener();
+    try{if(window.CrazyGames&&window.CrazyGames.SDK)window.CrazyGames.SDK.game.sdkGameLoadingStop();}catch(e){}
     const $=id=>document.getElementById(id);
     const LT=['B','I','N','G','O'];
     const CL=['#eab308','#22c55e','#3b82f6','#f97316','#a855f7','#8b5cf6','#d97706','#f8fafc','#ec4899','#06b6d4'];
@@ -884,7 +895,7 @@ const CG={s:null,init(){
                 A.p('click');
                 try {
                     let link = window.location.href.split('?')[0] + '?roomId=' + roomId;
-                    if(CG.s && CG.s.game && CG.s.game.inviteLink) link = CG.s.game.inviteLink({roomId});
+                    if(window.CrazyGames&&window.CrazyGames.SDK&&window.CrazyGames.SDK.game.inviteLink) link = window.CrazyGames.SDK.game.inviteLink({roomId});
                     navigator.clipboard.writeText(link).then(() => {
                         btnLink.textContent = '✅ Copied!';
                         setTimeout(() => { btnLink.textContent = '📋 Copy Link'; }, 2000);
