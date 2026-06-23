@@ -42,7 +42,7 @@
 
         /* Game layout */
         body.game-active #s-game{flex-direction:row;gap:0;width:100%;flex:1;min-height:0;}
-        .game-main{flex:1;display:flex;flex-direction:column;min-height:0;justify-content:center;align-items:center;}
+        .game-main{flex:1;display:flex;flex-direction:column;min-height:0;justify-content:center;align-items:center;position:relative;}
         .game-side{width:220px;display:none;flex-direction:column;min-height:0;
             border-left:1px solid var(--brd);padding-left:0.75rem;margin-left:0.5rem;}
         body.game-active.has-sidebar .game-side{display:flex;}
@@ -176,6 +176,36 @@
 
         .ctrls{display:flex;gap:6px;}
         .ctrls button{flex:1;padding:8px;font-size:.78rem;border-radius:8px;font-weight:700;}
+        
+        /* Online Setup Overlay Controls */
+        body:not(.game-active) .ctrls.online-setup {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            max-width: 350px;
+            gap: 15px;
+            z-index: 50;
+            margin-bottom: 0 !important;
+            padding: 10px;
+            background: rgba(10, 14, 23, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 16px;
+            border: 1px solid var(--brd2);
+        }
+        body:not(.game-active) .ctrls.online-setup button {
+            padding: 16px;
+            font-size: 1.15rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            transition: all 0.2s;
+        }
+        body:not(.game-active) .ctrls.online-setup button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
 
         /* Overlay */
         .ov{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,14,23,0.85);
@@ -826,6 +856,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             $('b-fill').classList.remove('hidden');$('b-fill').textContent='Shuffle';
             $('b-start').classList.add('hidden');
             $('b-clr').classList.remove('hidden');$('b-clr').disabled=false;
+            document.querySelector('.ctrls').classList.remove('online-setup');
             $('g-tu').textContent='Tap numbers on your board';$('g-tu').style.background='var(--bg2)';$('g-tu').style.color='var(--t2)';
             bars.classList.add('hidden');
             active=true;
@@ -833,6 +864,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             $('b-fill').classList.remove('hidden');$('b-fill').textContent='Shuffle';
             $('b-start').classList.remove('hidden');$('b-start').textContent='Ready';$('b-start').disabled=false;
             $('b-clr').classList.add('hidden');
+            document.querySelector('.ctrls').classList.add('online-setup');
             $('g-tu').textContent='Waiting to get ready...';$('g-tu').style.background='var(--bg2)';$('g-tu').style.color='var(--t2)';
             bars.classList.remove('hidden');
         } else{
@@ -841,6 +873,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             $('b-start').textContent = (mode==='local' && players.length > 1) ? 'Next Player' : 'Start';
             $('b-start').disabled=false;
             $('b-clr').classList.add('hidden');
+            document.querySelector('.ctrls').classList.remove('online-setup');
             if(mode === 'local') {
                 $('g-tu').textContent=`${players[0].name}, setup your board!`;
                 $('g-tu').style.background=players[0].color;
