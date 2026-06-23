@@ -328,12 +328,31 @@
                 <button class="cb" id="btn-join">Join Game</button>
             </div>
             <div id="ol-host-ui">
-                <p style="font-size:.8rem; color:var(--t2); text-align:center; margin-bottom:.4rem;">Share this Room Code with your friend:</p>
+                <div class="opt">
+                    <label class="ol">Max Players</label>
+                    <div class="bg" id="g-mp" style="grid-template-columns:repeat(5,1fr);">
+                        <button class="cb on" data-mp="2">2</button>
+                        <button class="cb" data-mp="3">3</button>
+                        <button class="cb" data-mp="4">4</button>
+                        <button class="cb" data-mp="5">5</button>
+                        <button class="cb" data-mp="6">6</button>
+                    </div>
+                </div>
+                <p style="font-size:.8rem; color:var(--t2); text-align:center; margin-bottom:.4rem;">Share this Room Code:</p>
                 <div style="background:var(--bg1); border:1.5px solid var(--brd); border-radius:8px; padding:10px; font-size:1.5rem; font-weight:900; text-align:center; letter-spacing:4px; color:var(--ind);" id="ol-room-code">----</div>
+                <div style="display:flex;gap:6px;margin-top:8px;">
+                    <button class="bs" id="btn-invite-link" style="flex:1;font-size:.78rem;padding:6px;">📋 Copy Link</button>
+                    <button class="bs" id="btn-cg-invite" style="flex:1;font-size:.78rem;padding:6px;">📨 Invite Friends</button>
+                </div>
             </div>
             <div id="ol-join-ui" class="hidden">
                 <label class="ol" for="ol-join-code">Enter Room Code</label>
                 <input type="text" id="ol-join-code" placeholder="XXXX" style="text-transform:uppercase; font-size:1.2rem; text-align:center; letter-spacing:4px;">
+            </div>
+            <div id="ol-lobby" class="hidden" style="margin-top:.5rem;">
+                <label class="ol">Players in Room</label>
+                <div id="ol-lobby-list" style="display:flex;flex-direction:column;gap:4px;margin-top:.25rem;"></div>
+                <div id="ol-lobby-tip" style="font-size:.72rem;color:var(--t3);text-align:center;margin-top:.25rem;"></div>
             </div>
             <div id="ol-status" style="font-size: 0.8rem; text-align: center; color: var(--amb); font-weight: 700; margin-top: .4rem; display: none;">Waiting for connection...</div>
         </div>
@@ -450,12 +469,12 @@
     }
 
 /* Audio */
-const A={c:null,m:false,
+const A={c:null,m:false,cgMuted:false,
     init(){this.m=localStorage.getItem('bm')==='1';this._u();},
     _u(){const b=document.getElementById('hb-s');if(b)b.textContent=this.m?'🔇 Muted':'🔊 Sound';},
     tog(){this.m=!this.m;localStorage.setItem('bm',this.m?'1':'0');this._u();this.p('click');},
     _x(){if(!this.c)this.c=new(window.AudioContext||window.webkitAudioContext)();if(this.c.state==='suspended')this.c.resume();},
-    p(t){if(this.m)return;try{this._x();const n=this.c.currentTime,o=this.c.createOscillator(),g=this.c.createGain();
+    p(t){if(this.m||this.cgMuted)return;try{this._x();const n=this.c.currentTime,o=this.c.createOscillator(),g=this.c.createGain();
         o.connect(g);g.connect(this.c.destination);
         if(t==='click'){o.type='sine';o.frequency.setValueAtTime(350,n);o.frequency.exponentialRampToValueAtTime(100,n+.08);g.gain.setValueAtTime(.15,n);g.gain.exponentialRampToValueAtTime(.01,n+.08);o.start(n);o.stop(n+.08);}
         else if(t==='mark'){o.type='triangle';o.frequency.setValueAtTime(520,n);o.frequency.setValueAtTime(784,n+.06);g.gain.setValueAtTime(.1,n);g.gain.exponentialRampToValueAtTime(.01,n+.2);o.start(n);o.stop(n+.2);}
@@ -466,10 +485,25 @@ const A={c:null,m:false,
 };
 
 /* CrazyGames */
-const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=window.CrazyGames.SDK;},
+const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK){this.s=window.CrazyGames.SDK;
+    try{if(this.s.game&&this.s.game.addSettingsChangeListener){this.s.game.addSettingsChangeListener(s=>{A.cgMuted=!!s.muteAudio;});}}catch(e){}}},
     gs(){try{this.s&&this.s.game.gameplayStart();}catch(e){}},
     gp(){try{this.s&&this.s.game.gameplayStop();}catch(e){}},
-    ad(cb){if(cb)cb();}
+    ad(cb){if(cb)cb();},
+    updateRoom(rid,open){try{this.s&&this.s.game.updateRoom&&this.s.game.updateRoom({room:rid,isJoinable:open,inviteParams:{roomId:rid}});}catch(e){}},
+    showInvite(rid){try{this.s&&this.s.game.showInviteButton&&this.s.game.showInviteButton({roomId:rid});}catch(e){}},
+    hideInvite(){try{this.s&&this.s.game.hideInviteButton&&this.s.game.hideInviteButton();}catch(e){}},
+    async getInviteRoomId(){
+        try{
+            if(this.s&&this.s.game.getInviteParam){
+                const v=this.s.game.getInviteParam('roomId');
+                const resolved = (v && typeof v.then === 'function') ? await v : v;
+                if(resolved) return resolved;
+            }
+        }catch(e){}
+        return new URLSearchParams(window.location.search).get('roomId');
+    },
+    isInstant(){try{return !!(this.s&&this.s.game.isInstantMultiplayer);}catch(e){}return false;}
 };
 
     document.addEventListener('DOMContentLoaded',()=>{
@@ -483,6 +517,24 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     const savedName = localStorage.getItem('bingo_name');
     if(savedName && $('menu-name')) $('menu-name').value = savedName;
     if($('menu-name')) $('menu-name').addEventListener('input', e => localStorage.setItem('bingo_name', e.target.value));
+
+    /* Instant Multiplayer / Invite Link Check */
+    setTimeout(async () => {
+        // If CrazyGames platform triggers an Instant Multiplayer session, skip menu
+        if(CG.isInstant()) {
+            mode='online'; openSetup();
+            const bH=$('btn-host'); if(bH) bH.click();
+            return;
+        }
+        // If player arrived via an invite link, auto-join the room
+        const inviteRoomId = await CG.getInviteRoomId();
+        if(inviteRoomId && typeof inviteRoomId === 'string' && inviteRoomId.trim().length > 0) {
+            mode='online'; openSetup();
+            const bJ=$('btn-join'); if(bJ) bJ.click();
+            const joinCode=$('ol-join-code'); if(joinCode) joinCode.value=inviteRoomId.toUpperCase();
+            setTimeout(()=>{ const bN=$('bn'); if(bN&&!bN.disabled) bN.click(); }, 400);
+        }
+    }, 500);
 
     /* Background Animation */
     const cvs=$('bg-canvas'), ctx=cvs.getContext('2d');
@@ -549,6 +601,9 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     let players=[],sIdx=0,selC=null;
     let rtcPeerConnection=null, conn=null, isHost=false, roomId='';
     let isRandomMatchmaking=false;
+    // Room Match (multi-player via Supabase)
+    let myPlayerIdx=0, roomMaxPlayers=2, roomPlayers=[], roomBoards={}, roomReadyCount=0, roomRematchReqs=new Set();
+    let hostBackupTimer=null;
     const SUPABASE_URL = 'https://aronekhbwtwqsjsuefle.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyb25la2hid3R3cXNqc3VlZmxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjM5MzUsImV4cCI6MjA5Nzc5OTkzNX0.x96nPquFuSURxFzI_9j_Ir5iNXuYfSf0zoZPYKpOuqc';
     let supabaseClient=null, matchmakingChannel=null;
@@ -623,8 +678,10 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     
     function setupOnlineUI(){
         const bH=$('btn-host'), bJ=$('btn-join');
-        bH.onclick=()=>{ A.p('click'); isHost=true; wasRandom=false; bH.classList.add('on'); bJ.classList.remove('on'); $('ol-host-ui').classList.remove('hidden'); $('ol-join-ui').classList.add('hidden'); $('sf-grid').classList.remove('hidden'); $('bn').textContent='Start Match'; $('bn').disabled=false; $('inp').disabled=false; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; initWebRTCHost(); };
-        bJ.onclick=()=>{ A.p('click'); isHost=false; wasRandom=false; bJ.classList.add('on'); bH.classList.remove('on'); $('ol-join-ui').classList.remove('hidden'); $('ol-host-ui').classList.add('hidden'); $('sf-grid').classList.add('hidden'); $('bn').textContent='Connect & Join'; $('bn').disabled=false; $('inp').disabled=false; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; if(rtcPeerConnection) { rtcPeerConnection.close(); rtcPeerConnection=null; } conn=null; $('ol-status').style.display='none'; };
+        bH.onclick=()=>{ A.p('click'); isHost=true; wasRandom=false; bH.classList.add('on'); bJ.classList.remove('on'); $('ol-host-ui').classList.remove('hidden'); $('ol-join-ui').classList.add('hidden'); $('ol-lobby').classList.add('hidden'); $('sf-grid').classList.remove('hidden'); $('bn').textContent='Start Game'; $('bn').disabled=true; $('inp').disabled=false; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; initRoomHost(); };
+        bJ.onclick=()=>{ A.p('click'); isHost=false; wasRandom=false; bJ.classList.add('on'); bH.classList.remove('on'); $('ol-join-ui').classList.remove('hidden'); $('ol-host-ui').classList.add('hidden'); $('ol-lobby').classList.add('hidden'); $('sf-grid').classList.add('hidden'); $('bn').textContent='Connect & Join'; $('bn').disabled=false; $('inp').disabled=false; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; if(RoomConn&&RoomConn._ch){RoomConn.close();} $('ol-status').style.display='none'; };
+        // Max player buttons
+        const gMp=$('g-mp'); if(gMp) gMp.querySelectorAll('.cb').forEach(b=>{ b.addEventListener('click',()=>{ A.p('click'); gMp.querySelectorAll('.cb').forEach(x=>x.classList.remove('on')); b.classList.add('on'); roomMaxPlayers=+b.dataset.mp; }); });
         if(isHost===false && $('ol-join-ui').classList.contains('hidden')===false) { /* already join */ } else { bH.click(); }
     }
 
@@ -754,25 +811,93 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         return signalChannel;
     }
 
-    function initWebRTCHost(){
-        if(rtcPeerConnection) { rtcPeerConnection.close(); }
+    /* ─── Supabase Realtime Room Transport (Room Match, up to 6 players) ─── */
+    const RoomConn = {
+        _ch: null, roomId: null, myUID: null,
+        create(rid) {
+            this.roomId = rid;
+            this.myUID = window.myUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+            if(!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            if(this._ch) try { supabaseClient.removeChannel(this._ch); } catch(e) {}
+            this._ch = supabaseClient.channel('bfest_rm_' + rid, {config:{broadcast:{self:true}}});
+            return this;
+        },
+        on(cb) { if(this._ch) this._ch.on('broadcast', {event:'msg'}, p => cb(p.payload)); return this; },
+        sub(cb) { if(this._ch) this._ch.subscribe(cb); return this; },
+        send(data) { if(this._ch) this._ch.send({type:'broadcast',event:'msg',payload:data}).catch(()=>{}); },
+        close() { if(this._ch && supabaseClient) { try { supabaseClient.removeChannel(this._ch); } catch(e) {} this._ch=null; } this.roomId=null; }
+    };
+
+    function updateLobbyUI() {
+        const list = $('ol-lobby-list');
+        if(!list) return;
+        list.innerHTML = '';
+        roomPlayers.forEach((p, i) => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--srf2);border:1px solid var(--brd);border-radius:8px;';
+            const dot = document.createElement('span');
+            dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:${p.color};flex-shrink:0;`;
+            const nm = document.createElement('span');
+            nm.style.cssText = 'font-size:.8rem;font-weight:700;color:var(--t1);flex:1;';
+            nm.textContent = p.name + (i === 0 ? ' 👑' : '');
+            const badge = document.createElement('span');
+            badge.style.cssText = 'font-size:.65rem;color:var(--grn);font-weight:700;';
+            badge.textContent = '✓ In Room';
+            row.appendChild(dot); row.appendChild(nm); row.appendChild(badge);
+            list.appendChild(row);
+        });
+        const tip = $('ol-lobby-tip');
+        if(tip) {
+            const need = roomMaxPlayers - roomPlayers.length;
+            tip.textContent = need > 0 ? `Waiting for ${need} more player${need>1?'s':''}...` : '✅ Room full — host can start!';
+        }
+    }
+
+    function initRoomHost() {
         roomId = Math.random().toString(36).substr(2, 4).toUpperCase();
-        $('ol-room-code').textContent = 'Loading...';
-        
-        window.myUserId = window.myUserId || 'user_' + Math.random().toString(36).substr(2, 9);
-        if(!supabaseClient) { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
-        
-        setupWebRTCHost('bingofest_room_' + roomId, () => {
-            if(conn && conn.open) {
-                setupConn();
-                $('ol-status').style.display='block';
-                $('ol-status').textContent='Friend connected! Ready to start.';
-                $('ol-status').style.color='var(--grn)';
+        $('ol-room-code').textContent = roomId;
+        roomPlayers = []; roomBoards = {}; roomReadyCount = 0; myPlayerIdx = 0; wasRandom = false;
+
+        // Copy invite link
+        const btnLink = $('btn-invite-link');
+        if(btnLink) {
+            btnLink.textContent = '📋 Copy Link';
+            btnLink.onclick = () => {
+                A.p('click');
+                try {
+                    let link = window.location.href.split('?')[0] + '?roomId=' + roomId;
+                    if(CG.s && CG.s.game && CG.s.game.inviteLink) link = CG.s.game.inviteLink({roomId});
+                    navigator.clipboard.writeText(link).then(() => {
+                        btnLink.textContent = '✅ Copied!';
+                        setTimeout(() => { btnLink.textContent = '📋 Copy Link'; }, 2000);
+                    }).catch(() => { prompt('Copy this invite link:', link); });
+                } catch(e) {}
+            };
+        }
+        // CrazyGames Invite Friends button
+        const btnCgInv = $('btn-cg-invite');
+        if(btnCgInv) { btnCgInv.onclick = () => { A.p('click'); CG.showInvite(roomId); }; }
+
+        // Notify CrazyGames this room is open/joinable
+        CG.updateRoom(roomId, true);
+
+        // Create Supabase room channel
+        RoomConn.create(roomId);
+        RoomConn.on(data => handleRoomMsg(data));
+        RoomConn.sub(status => {
+            if(status === 'SUBSCRIBED') {
+                const hostName = $('inp').value.trim() || defaultFancyName;
+                roomPlayers = [{name: hostName, color: selC, userId: RoomConn.myUID, idx: 0}];
+                $('ol-lobby').classList.remove('hidden');
+                updateLobbyUI();
+                $('ol-status').style.display = 'block';
+                $('ol-status').textContent = 'Room ready — share the code or invite friends!';
+                $('ol-status').style.color = 'var(--amb)';
+                $('bn').disabled = true; // need ≥2 players
             }
         });
-        $('ol-room-code').textContent = roomId;
     }
-    
+
     function setupConn(){
         conn.on('data', data => handleOnlineMsg(data));
         conn.on('close', ()=>{ showDisconnectOverlay(); });
@@ -872,24 +997,181 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         }
     }
 
-    function handleOpponentCall(num) {
-        if(!active) return;
-        
-        // Locally, players[0] is always "me" and players[1] is always the online opponent
-        const opponentIndex = 1;
-        
-        A.p('mark');
-        showCalled(num, players[opponentIndex].color);
-        markNumOnAll(num, opponentIndex);
-        
-        const winners = checkAllWin();
-        if(winners !== null) { 
-            endGame(winners); 
-            return; 
+    function handleRoomMsg(data) {
+        if(!data || !data.type) return;
+        const myUID = RoomConn.myUID;
+
+        if(data.type === 'join') {
+            if(!isHost || data.fromUID === myUID) return;
+            if(roomPlayers.length >= roomMaxPlayers) {
+                RoomConn.send({type:'join_rej', reason:'Room is full', toUID: data.fromUID});
+                return;
+            }
+            let gc = data.color;
+            const usedColors = roomPlayers.map(p => p.color);
+            if(usedColors.includes(gc)) { const un=CL.filter(c=>!usedColors.includes(c)); if(un.length) gc=un[0]; }
+            const gIdx = roomPlayers.length;
+            roomPlayers.push({name: data.name, color: gc, userId: data.fromUID, idx: gIdx});
+            RoomConn.send({type:'join_ack', toUID: data.fromUID, playerIdx: gIdx, allPlayers: roomPlayers, maxPlayers: roomMaxPlayers});
+            RoomConn.send({type:'lobby_update', allPlayers: roomPlayers, maxPlayers: roomMaxPlayers});
+            updateLobbyUI();
+            const needed = roomMaxPlayers - roomPlayers.length;
+            const stEl = $('ol-status');
+            if(stEl) { stEl.textContent = needed > 0 ? `${roomPlayers.length}/${roomMaxPlayers} players — waiting for ${needed} more...` : `All ${roomMaxPlayers} players joined! Ready to start.`; }
+            $('bn').disabled = (roomPlayers.length < 2);
+
+        } else if(data.type === 'join_ack') {
+            if(data.toUID !== myUID) return;
+            myPlayerIdx = data.playerIdx;
+            roomPlayers = data.allPlayers;
+            roomMaxPlayers = data.maxPlayers;
+            $('ol-lobby').classList.remove('hidden');
+            updateLobbyUI();
+            $('ol-status').style.display = 'block';
+            $('ol-status').textContent = `You joined as Player ${myPlayerIdx + 1}! Waiting for host to start.`;
+            $('ol-status').style.color = 'var(--grn)';
+            $('bn').textContent = 'Waiting for host...';
+            $('bn').disabled = true;
+
+        } else if(data.type === 'join_rej') {
+            if(data.toUID !== myUID) return;
+            customAlert('Could not join: ' + (data.reason || 'Room is full'), () => { $('bn').disabled=false; $('bn').textContent='Connect & Join'; });
+
+        } else if(data.type === 'lobby_update') {
+            if(data.toUID && data.toUID !== myUID) return;
+            roomPlayers = data.allPlayers;
+            roomMaxPlayers = data.maxPlayers || roomMaxPlayers;
+            updateLobbyUI();
+
+        } else if(data.type === 'setup') {
+            // Host broadcasts setup — all players receive (host too via self:true)
+            gs = data.gs;
+            roomPlayers = data.allPlayers;
+            roomMaxPlayers = data.maxPlayers;
+            roomBoards = data.boards;
+            const myEntry = roomPlayers.find(p => p.userId === myUID);
+            if(myEntry) myPlayerIdx = myEntry.idx;
+            players = roomPlayers.map(p => ({name:p.name, color:p.color, isAI:false, isOnline: p.userId !== myUID}));
+            mode = 'online';
+            launch();
+
+        } else if(data.type === 'ready') {
+            if(data.fromUID === myUID) return; // ignore own
+            roomReadyCount++;
+            if(isHost) checkRoomReadyStart();
+
+        } else if(data.type === 'start_game') {
+            if(data.fromUID === myUID) return;
+            if(!active) {
+                const ctrls = document.querySelector('.ctrls');
+                if(ctrls) ctrls.classList.remove('online-setup');
+                $('b-start') && $('b-start').classList.add('hidden');
+                $('b-fill') && $('b-fill').classList.add('hidden');
+                active = true; curP = 0;
+                CG.hideInvite();
+                CG.updateRoom(roomId, false);
+                showTurn();
+            }
+
+        } else if(data.type === 'call') {
+            // Only host processes incoming calls and re-broadcasts as call_ack
+            if(!isHost) return;
+            if(!active || data.callerIdx !== curP) return;
+            RoomConn.send({type:'call_ack', num: data.num, callerIdx: data.callerIdx, nextP: (curP+1)%players.length, fromUID: myUID});
+
+        } else if(data.type === 'call_ack') {
+            // All players (including host via self:true) process the authoritative call
+            processRoomCall(data.num, data.callerIdx, data.nextP);
+
+        } else if(data.type === 'game_over') {
+            if(data.fromUID === myUID) return;
+            if(active) endGame(data.winnerIndices);
+
+        } else if(data.type === 'rematch_req') {
+            if(data.fromUID === myUID) return;
+            roomRematchReqs.add(data.fromUID);
+            // Update rematch button UI for other players
+            if(!$('ov').classList.contains('hidden')) {
+                const reqCount = roomRematchReqs.size + (window.localRematchReq ? 1 : 0);
+                const total = roomPlayers.length;
+                if(!window.localRematchReq) {
+                    $('b-re').textContent = `Accept Rematch (${reqCount}/${total})`;
+                    $('b-re').classList.add('glow');
+                    $('b-re').disabled = false;
+                } else {
+                    $('b-re').textContent = `Waiting... (${reqCount}/${total})`;
+                }
+            }
+            // Host checks if all players agreed
+            if(isHost) {
+                const reqCount = roomRematchReqs.size + (window.localRematchReq ? 1 : 0);
+                if(reqCount >= roomPlayers.length) {
+                    roomRematchReqs = new Set(); roomReadyCount = 0; isLocalReady = false;
+                    RoomConn.send({type:'rematch_start', fromUID: myUID});
+                    $('ov').classList.add('hidden');
+                    if($('b-nm')) $('b-nm').classList.add('hidden');
+                    launch();
+                }
+            }
+
+        } else if(data.type === 'rematch_start') {
+            if(data.fromUID === myUID) return;
+            roomRematchReqs = new Set(); roomReadyCount = 0; isLocalReady = false;
+            $('ov').classList.add('hidden');
+            if($('b-nm')) $('b-nm').classList.add('hidden');
+            launch();
+
+        } else if(data.type === 'quit') {
+            if(data.fromUID === myUID || window.isQuitting) return;
+            const leaverName = (roomPlayers.find(p=>p.userId===data.fromUID)||{name:'A player'}).name;
+            if(active) {
+                // End the game — remaining players win
+                active = false;
+                if(turnTimer) { clearInterval(turnTimer); turnTimer = null; }
+                if(hostBackupTimer) { clearTimeout(hostBackupTimer); hostBackupTimer = null; }
+                pd.forEach(p=>{ if(p.cellEls) p.cellEls.forEach(c=>c.classList.add('off')); });
+                CG.gp();
+                $('ov').classList.remove('hidden');
+                $('ov-e').textContent='🔌';$('ov-h').textContent='Player Left';$('ov-h').className='text-win';
+                $('ov-p').textContent=`${leaverName} left the game.`;
+                $('ov-bds').innerHTML='';
+                $('b-re').textContent = 'Rematch'; $('b-re').disabled = true;
+                $('b-mm').onclick = () => { A.p('click'); window.isQuitting = true; $('ov').classList.add('hidden'); goMenu(); };
+            } else {
+                customAlert(leaverName + ' left the game.');
+            }
         }
-        
-        curP = 0; // Back to my turn
+    }
+
+    function processRoomCall(num, callerIdx, nextP) {
+        if(!active) return;
+        A.p('mark');
+        showCalled(num, players[callerIdx].color);
+        markNumOnAll(num, callerIdx);
+        const winners = checkAllWin();
+        if(winners !== null) {
+            if(isHost) RoomConn.send({type:'game_over', winnerIndices: winners, fromUID: RoomConn.myUID});
+            endGame(winners);
+            return;
+        }
+        curP = nextP;
         showTurn();
+    }
+
+    function checkRoomReadyStart() {
+        const totalReady = (isLocalReady ? 1 : 0) + roomReadyCount;
+        if(totalReady >= roomPlayers.length) {
+            RoomConn.send({type:'start_game', fromUID: RoomConn.myUID});
+            // Host also starts locally
+            const ctrls = document.querySelector('.ctrls');
+            if(ctrls) ctrls.classList.remove('online-setup');
+            $('b-start') && $('b-start').classList.add('hidden');
+            $('b-fill') && $('b-fill').classList.add('hidden');
+            active = true; curP = 0;
+            CG.hideInvite();
+            CG.updateRoom(roomId, false);
+            showTurn();
+        }
     }
 
     function resetRandomUI() {
@@ -1128,32 +1410,32 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         
         if(mode==='online'){
             if(isHost){
-                if(!conn || !conn.open) { customAlert('Wait for a friend to connect first!'); return; }
-                const gInfo = window.guestInfo || {name:'Guest', color:'#f97316'};
-                players=[
-                    {name:nm, color:selC, isAI:false, isOnline:false}, 
-                    {name:gInfo.name, color:gInfo.color, isAI:false, isOnline:true}
-                ];
-                conn.send({type:'init', gs:gs, hostName:nm, hostColor:selC, guestColor:gInfo.color});
-                $('ol-status').textContent='Starting...';
-                launch();
+                // Room match: host clicks Start Game — generate all boards and broadcast setup
+                if(roomPlayers.length < 2) { customAlert('Wait for at least one friend to join first!'); return; }
+                $('bn').disabled=true; $('bn').textContent='Starting...';
+                roomBoards = {};
+                players = roomPlayers.map((p,i) => ({name:p.name, color:p.color, isAI:false, isOnline: i!==myPlayerIdx}));
+                roomPlayers.forEach((p,i) => { roomBoards[i] = shuffle(gs*gs); });
+                // Broadcast setup to all — host receives via self:true and also launches
+                RoomConn.send({type:'setup', gs, allPlayers:roomPlayers, maxPlayers:roomMaxPlayers, boards:roomBoards, fromUID: RoomConn.myUID});
             } else {
+                // Guest: connect to room via Supabase
                 const code=$('ol-join-code').value.trim().toUpperCase();
-                if(!code) return;
+                if(!code || code.length < 2) { customAlert('Enter a valid room code.'); return; }
                 $('bn').disabled=true; $('bn').textContent='Connecting...';
-                
-                window.myUserId = window.myUserId || 'user_' + Math.random().toString(36).substr(2, 9);
-                if(!supabaseClient) { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
-                
-                setupWebRTCGuest('bingofest_room_' + code, null, () => {
-                    setupConn();
-                    conn.send({type:'join', guestName:nm, guestColor:selC});
-                    $('ol-status').style.display='block';
-                    $('ol-status').textContent='Joined! Waiting for Host to start.';
-                    $('bn').textContent='Waiting...';
-                }, () => {
-                    customAlert('Could not connect to room. Check the code.');
-                    $('bn').disabled=false; $('bn').textContent='Start Match';
+                if(!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                RoomConn.create(code);
+                RoomConn.on(data => handleRoomMsg(data));
+                RoomConn.sub(status => {
+                    if(status === 'SUBSCRIBED') {
+                        RoomConn.send({type:'join', name: nm, color: selC, fromUID: RoomConn.myUID});
+                        $('ol-status').style.display='block';
+                        $('ol-status').textContent='Connecting to room...';
+                        $('ol-status').style.color='var(--amb)';
+                    } else if(status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+                        customAlert('Could not connect. Check the code and try again.');
+                        $('bn').disabled=false; $('bn').textContent='Connect & Join';
+                    }
                 });
             }
         } else if(mode==='random') {
@@ -1194,7 +1476,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         $('s-setup').classList.add('hidden');$('s-game').classList.remove('hidden');
         pd=[];active=false;filled=false;curP=0;stopConf();$('ov').classList.add('hidden');
         $('g-called').classList.add('hidden');
-        isLocalReady=false; isOpponentReady=false;
+        isLocalReady=false; isOpponentReady=false; roomReadyCount=0; roomRematchReqs=new Set();
         if(turnTimer) { clearInterval(turnTimer); turnTimer=null; }
         setupP = 0;
 
@@ -1204,14 +1486,16 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
         // Create per-player data
         players.forEach((pl,pi)=>{
-            const nums=shuffle(gs*gs);
+            // Room match: use host-assigned boards; otherwise shuffle locally
+            const nums = (mode==='online' && roomBoards && roomBoards[pi]) ? roomBoards[pi].slice() : shuffle(gs*gs);
             const board=Array(gs).fill(null).map(()=>Array(gs).fill(false));
             const numMap={};
             nums.forEach((v,i)=>{numMap[v]={r:Math.floor(i/gs),c:i%gs};});
             pd.push({nums,board,lines:new Set(),drawnLines:new Set(),numMap,ltrEls:[], cellEls:[], linesEl:null, gridEl:null, wrapEl:null});
         });
 
-        if(mode==='online' && conn && conn.open) {
+        // Sync board via WebRTC for 1v1 random/room match (legacy support)
+        if(mode==='online' && conn && conn.open && !(RoomConn._ch && roomPlayers.length > 0)) {
             conn.send({type:'sync_board', nums: pd[0].nums});
         }
 
@@ -1282,11 +1566,13 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             bars.classList.add('hidden');
             active=true;
         } else if(mode==='online'){
-            $('b-fill').classList.remove('hidden');$('b-fill').textContent='Shuffle';
+            const isRoom = RoomConn._ch && roomPlayers.length > 0;
+            // Hide shuffle for room match (boards are host-assigned)
+            if(isRoom) { $('b-fill').classList.add('hidden'); } else { $('b-fill').classList.remove('hidden'); $('b-fill').textContent='Shuffle'; }
             $('b-start').classList.remove('hidden');$('b-start').textContent='Ready';$('b-start').disabled=false;
             $('b-clr').classList.add('hidden');
             document.querySelector('.ctrls').classList.add('online-setup');
-            $('g-tu').textContent='Waiting to get ready...';$('g-tu').style.background='var(--bg2)';$('g-tu').style.color='var(--t2)';
+            $('g-tu').textContent='Shuffle your board then click Ready...';$('g-tu').style.background='var(--bg2)';$('g-tu').style.color='var(--t2)';
             bars.classList.remove('hidden');
         } else{
             $('b-fill').classList.remove('hidden');$('b-fill').textContent='Shuffle';
@@ -1294,14 +1580,20 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             $('b-start').textContent = (mode==='local' && players.length > 1) ? 'Next Player' : 'Start';
             $('b-start').disabled=false;
             $('b-clr').classList.add('hidden');
-            document.querySelector('.ctrls').classList.remove('online-setup');
-            if(mode === 'local') {
-                $('g-tu').textContent=`${players[0].name}, setup your board!`;
-                $('g-tu').style.background=players[0].color;
-                $('g-tu').style.color='white';
-            } else {
-                $('g-tu').textContent='Ready to begin!';
+            if(mode === 'solo') {
+                document.querySelector('.ctrls').classList.add('online-setup');
+                $('g-tu').textContent='Shuffle your board then click Start...';
                 $('g-tu').style.background='var(--bg2)';$('g-tu').style.color='var(--t2)';
+            } else {
+                document.querySelector('.ctrls').classList.remove('online-setup');
+                if(mode === 'local') {
+                    $('g-tu').textContent=`${players[0].name}, setup your board!`;
+                    $('g-tu').style.background=players[0].color;
+                    $('g-tu').style.color='white';
+                } else {
+                    $('g-tu').textContent='Ready to begin!';
+                    $('g-tu').style.background='var(--bg2)';$('g-tu').style.color='var(--t2)';
+                }
             }
             bars.classList.remove('hidden');
         }
@@ -1341,7 +1633,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
                 }
             });
         });
-        if(mode==='online' && conn && conn.open) {
+        if(mode==='online' && conn && conn.open && !(RoomConn._ch && roomPlayers.length > 0)) {
             conn.send({type:'sync_board', nums: pd[0].nums});
         }
     });
@@ -1353,8 +1645,15 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             $('b-start').textContent = 'Waiting...';
             $('b-start').disabled = true;
             $('b-fill').classList.add('hidden');
-            if(conn && conn.open) conn.send({type:'ready'});
-            checkReadyStart();
+            if(RoomConn._ch && roomPlayers.length > 0) {
+                // Room match: broadcast ready to host
+                RoomConn.send({type:'ready', fromUID: RoomConn.myUID});
+                if(isHost) checkRoomReadyStart();
+            } else if(conn && conn.open) {
+                // WebRTC (random match)
+                conn.send({type:'ready'});
+                checkReadyStart();
+            }
         } else if(mode === 'local') {
             setupP++;
             if(setupP < players.length) {
@@ -1372,6 +1671,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         } else {
             $('b-start').classList.add('hidden');
             $('b-fill').classList.add('hidden');
+            document.querySelector('.ctrls').classList.remove('online-setup');
             active=true;curP=0;showTurn();
         }
     });
@@ -1400,6 +1700,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
     function showTurn(){
         if(turnTimer) { clearInterval(turnTimer); turnTimer = null; }
+        if(hostBackupTimer) { clearTimeout(hostBackupTimer); hostBackupTimer = null; }
         
         const p=players[curP];
         
@@ -1411,13 +1712,28 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
                 if(timeLeft <= 0) {
                     clearInterval(turnTimer);
                     turnTimer = null;
-                    if(curP === 0) autoPickNumber();
+                    if(curP === myPlayerIdx) autoPickNumber();
                 }
             }, 1000);
             updateTurnText();
+            // Host backup: if a remote player's timer expires, host auto-picks for them after 3 extra seconds
+            if(isHost && curP !== myPlayerIdx && RoomConn._ch && roomPlayers.length > 0) {
+                hostBackupTimer = setTimeout(() => {
+                    hostBackupTimer = null;
+                    if(!active || curP === myPlayerIdx) return;
+                    // Pick a random unmarked cell from the timed-out player's board
+                    const tp = pd[curP];
+                    const unmarked = [];
+                    for(let r=0;r<gs;r++) for(let c=0;c<gs;c++) if(!tp.board[r][c]) unmarked.push(tp.nums[r*gs+c]);
+                    if(unmarked.length > 0) {
+                        const num = unmarked[Math.floor(Math.random()*unmarked.length)];
+                        RoomConn.send({type:'call_ack', num, callerIdx:curP, nextP:(curP+1)%players.length, fromUID:RoomConn.myUID});
+                    }
+                }, 33000); // 30s turn + 3s grace
+            }
         } else {
             if(active) {
-                if(curP === 0) {
+                if(curP === myPlayerIdx) {
                     $('g-tu').textContent=`Your Turn`;$('g-tu').style.background=p.color;$('g-tu').style.color='white';
                 } else {
                     $('g-tu').textContent=`${p.name}'s Turn`;$('g-tu').style.background=p.color;$('g-tu').style.color='white';
@@ -1446,7 +1762,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
     function updateTurnText() {
         const p=players[curP];
-        const isMyTurn = (curP === 0);
+        const isMyTurn = (curP === myPlayerIdx);
         const txt = isMyTurn ? `Your Turn (${timeLeft}s)` : `${p.name}'s Turn (${timeLeft}s)`;
         $('g-tu').textContent=txt;
         $('g-tu').style.background=p.color;
@@ -1454,22 +1770,25 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     }
 
     function autoPickNumber() {
-        if(!active || curP !== 0) return;
-        
-        const p = pd[0];
+        if(!active || curP !== myPlayerIdx) return;
+        const p = pd[myPlayerIdx];
         const unmarked = [];
         for(let r=0;r<gs;r++)for(let c=0;c<gs;c++)if(!p.board[r][c]) unmarked.push(p.nums[r*gs+c]);
-        
         if(unmarked.length > 0) {
             const calledNum = unmarked[Math.floor(Math.random()*unmarked.length)];
+            // Room match: send via channel (host validates + broadcasts call_ack)
+            if(RoomConn._ch && roomPlayers.length > 0) {
+                RoomConn.send({type:'call', num:calledNum, callerIdx:myPlayerIdx, fromUID:RoomConn.myUID});
+                pd.forEach(px=>{ if(px.cellEls) px.cellEls.forEach(c=>c.classList.add('off')); });
+                return;
+            }
+            // WebRTC (random match)
             A.p('mark');
             showCalled(calledNum, players[curP].color);
             markNumOnAll(calledNum, curP);
-            conn.send({type:'call', num:calledNum});
-            
+            if(conn && conn.open) conn.send({type:'call', num:calledNum});
             const winners=checkAllWin();
             if(winners!==null){ endGame(winners); return; }
-            
             curP=(curP+1)%players.length;
             showTurn();
         }
@@ -1488,11 +1807,20 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         const ci=+cell.dataset.ci;
         const calledNum=pd[pi].nums[ci];
 
+        // Room match: send call to host for validation; don't process locally
+        if(mode==='online' && RoomConn._ch && roomPlayers.length > 0) {
+            if(curP !== myPlayerIdx) return; // not your turn
+            RoomConn.send({type:'call', num:calledNum, callerIdx:myPlayerIdx, fromUID:RoomConn.myUID});
+            // Dim board while waiting for host ack
+            pd.forEach(px=>{ if(px.cellEls) px.cellEls.forEach(c=>c.classList.add('off')); });
+            return;
+        }
+
         A.p('mark');
         showCalled(calledNum, players[curP].color);
         markNumOnAll(calledNum, curP);
         
-        if(mode==='online') {
+        if(mode==='online' && conn && conn.open) {
             conn.send({type:'call', num:calledNum});
         }
 
@@ -1554,7 +1882,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         markNumOnAll(num, pi);
 
         const winner=checkAllWin();
-        if(winner!==null){ endGame(players[winner]); return; }
+        if(winner!==null){ endGame(winner); return; }
 
         curP=(curP+1)%players.length;
         showTurn();
@@ -1660,7 +1988,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
     function updLtrs(pi){
         const cnt=Math.min(pd[pi].lines.size,gs);
-        if(pi === 0){
+        if(pi === myPlayerIdx){
             for(let i=0;i<gs;i++){const b=$(`plt-${i}`);if(b){i<cnt?b.classList.add('on'):b.classList.remove('on');}}
         }
         if(pd[pi].ltrEls && pd[pi].ltrEls.length > 0){
@@ -1762,7 +2090,8 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             $('ov-p').textContent=`It's a tie between ${names}!`;
         } else {
             const winner=players[winnerIndices[0]];
-            if(winner.isAI || winner.isOnline){A.p('lose');$('ov-e').textContent='😔';$('ov-h').textContent='Defeat!';$('ov-h').className='text-lose';$('ov-p').textContent=`${winner.name} got BINGO first!`;}
+            const iWon = winnerIndices[0] === myPlayerIdx;
+            if(!iWon){A.p('lose');$('ov-e').textContent='😔';$('ov-h').textContent='Defeat!';$('ov-h').className='text-lose';$('ov-p').textContent=`${winner.name} got BINGO first!`;}
             else{A.p('win');$('ov-e').textContent='🏆';$('ov-h').textContent='Bingo!';$('ov-h').className='text-win';
                 $('ov-p').textContent=mode==='practice'?'Card cleared!':`Victory for ${winner.name}! 🏆`;}
         }
@@ -1771,6 +2100,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         // Always use the same rematch logic for both Random and Room online modes
         window.localRematchReq = false;
         window.opponentRematchReq = false;
+        roomRematchReqs = new Set();
         $('b-re').classList.remove('glow');
         $('b-re').textContent = 'Rematch';
         $('b-re').disabled = false;
@@ -1778,22 +2108,41 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             A.p('click');
             $('b-re').classList.remove('glow');
             if(mode==='online') {
-                window.localRematchReq = true;
-                if(window.opponentRematchReq) {
-                    if(isHost) {
-                        conn.send({type:'restart', hostName:players[0].name, hostColor:players[0].color});
+                if(RoomConn._ch && roomPlayers.length > 0) {
+                    // Room match: mutual rematch — everyone must agree
+                    window.localRematchReq = true;
+                    RoomConn.send({type:'rematch_req', fromUID: RoomConn.myUID});
+                    const reqCount = roomRematchReqs.size + 1; // +1 for self
+                    const total = roomPlayers.length;
+                    $('b-re').textContent = `Waiting... (${reqCount}/${total})`;
+                    $('b-re').disabled = true;
+                    // Host checks if everyone agreed
+                    if(isHost && reqCount >= total) {
+                        roomRematchReqs = new Set(); roomReadyCount = 0; isLocalReady = false;
+                        RoomConn.send({type:'rematch_start', fromUID: RoomConn.myUID});
                         $('ov').classList.add('hidden');
                         if($('b-nm')) $('b-nm').classList.add('hidden');
                         launch();
+                    }
+                } else {
+                    // WebRTC (random match) legacy
+                    window.localRematchReq = true;
+                    if(window.opponentRematchReq) {
+                        if(isHost) {
+                            conn.send({type:'restart', hostName:players[0].name, hostColor:players[0].color});
+                            $('ov').classList.add('hidden');
+                            if($('b-nm')) $('b-nm').classList.add('hidden');
+                            launch();
+                        } else {
+                            $('b-re').textContent = 'Waiting for Host...';
+                            $('b-re').disabled = true;
+                            conn.send({type:'rematch_req'});
+                        }
                     } else {
-                        $('b-re').textContent = 'Waiting for Host...';
+                        $('b-re').textContent = 'Waiting...';
                         $('b-re').disabled = true;
                         conn.send({type:'rematch_req'});
                     }
-                } else {
-                    $('b-re').textContent = 'Waiting...';
-                    $('b-re').disabled = true;
-                    conn.send({type:'rematch_req'});
                 }
             } else {
                 $('ov').classList.add('hidden');
@@ -1823,6 +2172,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         $('b-mm').onclick = () => {
             A.p('click');
             window.isQuitting = true;
+            if(RoomConn._ch) { try{ RoomConn.send({type:'quit', fromUID:RoomConn.myUID}); }catch(e){} }
             if(conn) { try{conn.send({type:'quit'});}catch(e){} conn.close(); conn = null; }
             if(rtcPeerConnection) { rtcPeerConnection.onconnectionstatechange = null; rtcPeerConnection.close(); rtcPeerConnection = null; }
             $('ov').classList.add('hidden');
@@ -1946,13 +2296,21 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
     function goMenu(){
         window.isQuitting = true;
+        // Room match cleanup
+        if(hostBackupTimer) { clearTimeout(hostBackupTimer); hostBackupTimer = null; }
+        if(turnTimer) { clearInterval(turnTimer); turnTimer = null; }
+        try { if(RoomConn._ch) { RoomConn.send({type:'quit', fromUID:RoomConn.myUID}); } } catch(e) {}
+        try { RoomConn.close(); } catch(e) {}
+        roomPlayers = []; roomBoards = {}; roomReadyCount = 0; myPlayerIdx = 0; roomRematchReqs = new Set();
+        CG.hideInvite();
+        try { CG.updateRoom('', false); } catch(e) {}
+        // WebRTC cleanup
         try { if(conn) { conn.send({type:'quit'}); } } catch(e) {}
         if(conn) { conn.close(); conn=null; }
         if(rtcPeerConnection) { rtcPeerConnection.onconnectionstatechange = null; rtcPeerConnection.close(); rtcPeerConnection=null; }
         if(window._signalChannel && supabaseClient) { supabaseClient.removeChannel(window._signalChannel); window._signalChannel=null; }
         CG.gp();stopConf();$('s-game').classList.add('hidden');$('s-setup').classList.add('hidden');$('s-menu').classList.remove('hidden');$('hb-m').classList.add('hidden');$('ov').classList.add('hidden');document.body.classList.remove('game-active','has-sidebar');
         if(isRandomMatchmaking) resetRandomUI();
-        // isQuitting stays true until next launch() call
     }
 
     /* Global online player counter */
