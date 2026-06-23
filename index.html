@@ -600,6 +600,11 @@ const CG={s:null,init(){
         if(!document.body.classList.contains('game-active')) return;
         const wraps=document.querySelectorAll('.bwrap');
         if(wraps.length===0) return;
+        
+        // Temporarily shrink board to get true container dimensions without stretching
+        const prevSize = document.documentElement.style.getPropertyValue('--board-size');
+        document.documentElement.style.setProperty('--board-size', '10px');
+        
         const gm=document.querySelector('.game-main');
         if(!gm) return;
         const gmRect=gm.getBoundingClientRect();
@@ -617,7 +622,7 @@ const CG={s:null,init(){
         /* Board label height */
         const lbl=document.querySelector('.board-label');
         if(lbl) hudH+=lbl.getBoundingClientRect().height+6;
-        hudH+=20; /* extra safety padding */
+        hudH+=30; /* extra safety padding */
         const availH=gmRect.height-hudH;
         const availW=gmRect.width-16;
         const boardCount=wraps.length;
