@@ -516,17 +516,23 @@ const CG={s:null,init(){
                 const v=window.CrazyGames.SDK.game.getInviteParam('roomId');
                 const resolved = (v && typeof v.then === 'function') ? await v : v;
                 if(resolved) return resolved;
+                
+                // Fallback for QA tester default
+                const v2=window.CrazyGames.SDK.game.getInviteParam('roomName');
+                const res2 = (v2 && typeof v2.then === 'function') ? await v2 : v2;
+                if(res2) return res2;
             }
         }catch(e){}
-        return new URLSearchParams(window.location.search).get('roomId');
+        return new URLSearchParams(window.location.search).get('roomId') || new URLSearchParams(window.location.search).get('roomName');
     },
     isInstant(){try{return !!(window.CrazyGames&&window.CrazyGames.SDK&&window.CrazyGames.SDK.game.isInstantMultiplayer);}catch(e){}return false;},
     initRoomJoinListener(){
         try{
             if(window.CrazyGames&&window.CrazyGames.SDK&&window.CrazyGames.SDK.game.addRoomJoinListener){
                 window.CrazyGames.SDK.game.addRoomJoinListener(e => {
-                    if(e.inviteParams && e.inviteParams.roomId) {
-                        window.location.href = window.location.href.split('?')[0] + '?roomId=' + e.inviteParams.roomId;
+                    if(e.inviteParams) {
+                        const rid = e.inviteParams.roomId || e.inviteParams.roomName;
+                        if(rid) window.location.href = window.location.href.split('?')[0] + '?roomId=' + rid;
                     }
                 });
             }
