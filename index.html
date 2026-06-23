@@ -28,7 +28,7 @@
 
         /* Panel: the main container */
         .panel{background:rgba(17,24,39,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-            border:1px solid var(--brd2);border-radius:20px;padding:1.25rem;
+            border:1px solid var(--brd2);border-radius:16px;padding:1rem;
             width:100%;max-width:560px;box-shadow:var(--sh-l),var(--glow);position:relative;z-index:10;
             display:flex;flex-direction:column;max-height:98vh;max-height:98dvh;overflow-y:auto;overflow-x:hidden;
             animation:fu .4s ease forwards;}
@@ -69,7 +69,7 @@
         .hb:hover{background:var(--srf);color:var(--t1);border-color:var(--acc);}
 
         /* Title */
-        .title{font-size:clamp(1.4rem,5vw,2.2rem);font-weight:900;text-align:center;margin-bottom:0.8rem;
+        .title{font-size:clamp(1.4rem,5vw,2rem);font-weight:900;text-align:center;margin-bottom:0.4rem;
             background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;
             -webkit-text-fill-color:transparent;background-clip:text;
             filter:drop-shadow(0 0 20px rgba(0,229,255,0.3));}
@@ -106,16 +106,16 @@
         .bs:hover{background:var(--srf);border-color:var(--acc);}
 
         /* Mode cards */
-        .mc{background:var(--srf2);border:1.5px solid var(--brd);border-radius:14px;padding:.85rem;
-            margin-bottom:.55rem;cursor:pointer;transition:all .25s;display:flex;align-items:center;
-            gap:.8rem;text-align:left;position:relative;overflow:hidden;}
+        .mc{background:var(--srf2);border:1.5px solid var(--brd);border-radius:12px;padding:.6rem .75rem;
+            margin-bottom:.4rem;cursor:pointer;transition:all .25s;display:flex;align-items:center;
+            gap:.6rem;text-align:left;position:relative;overflow:hidden;}
         .mc::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:4px 0 0 4px;
             background:var(--card-accent,var(--acc));opacity:0;transition:opacity .25s;}
         .mc:hover{border-color:var(--card-accent,var(--acc));transform:translateY(-2px);
             box-shadow:0 0 20px color-mix(in srgb, var(--card-accent,var(--acc)) 25%, transparent),var(--sh-m);}
         .mc:hover::before{opacity:1;}
         .mc.mc-featured{border-color:rgba(168,85,247,0.3);background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(0,229,255,0.05));}
-        .mi{font-size:1.5rem;background:var(--bg2);width:46px;height:46px;border-radius:12px;display:flex;justify-content:center;
+        .mi{font-size:1.3rem;background:var(--bg2);width:40px;height:40px;border-radius:10px;display:flex;justify-content:center;
             align-items:center;flex-shrink:0;border:1px solid var(--brd);transition:all .25s;}
         .mc:hover .mi{background:linear-gradient(135deg,var(--card-accent,var(--acc)),color-mix(in srgb, var(--card-accent,var(--acc)) 60%, var(--acc2)));border-color:transparent;
             box-shadow:0 0 15px color-mix(in srgb, var(--card-accent,var(--acc)) 40%, transparent);}
@@ -307,10 +307,10 @@
     <!-- MENU -->
     <div id="s-menu">
         <h1 class="title">Bingo Festival</h1>
-        <p style="text-align:center;color:var(--t3);font-size:.78rem;margin:-0.4rem 0 1rem;letter-spacing:.3px;">Pick a mode and start playing!</p>
-        <div style="margin-bottom: 15px; background: var(--srf); padding: 12px; border-radius: 12px; border: 1px solid var(--brd);">
-            <label class="ol" for="menu-name">Your Name</label>
-            <input type="text" id="menu-name" placeholder="Enter your name" maxlength="15" style="width: 100%; text-align: center; background:var(--srf2); border:1.5px solid var(--brd); padding:7px; border-radius:8px; color:white; font-size:1rem; outline:none; margin-top:0.4rem;">
+        <p style="text-align:center;color:var(--t3);font-size:.78rem;margin:-0.2rem 0 0.6rem;letter-spacing:.3px;">Pick a mode and start playing!</p>
+        <div style="margin-bottom: 0.6rem; background: var(--srf); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--brd);">
+            <label class="ol" for="menu-name" style="margin-bottom:0;">Your Name</label>
+            <input type="text" id="menu-name" placeholder="Enter your name" maxlength="15" style="width: 100%; text-align: center; background:var(--srf2); border:1.5px solid var(--brd); padding:5px; border-radius:8px; color:white; font-size:1rem; outline:none; margin-top:0.3rem;">
         </div>
         <div class="mc mc-featured" data-m="random" style="--card-accent:#a855f7;"><div class="mi">🎲</div><div class="md"><h3>Quick Match</h3><p>Jump in and play against a random opponent online.</p></div><span class="mc-badge" style="background:linear-gradient(135deg,#a855f7,#7c3aed);">Popular</span></div>
         <div class="mc" data-m="online" style="--card-accent:#3b82f6;"><div class="mi">🌐</div><div class="md"><h3>Play with Friends</h3><p>Create a private room and invite a friend with a code.</p></div></div>
