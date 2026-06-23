@@ -366,7 +366,33 @@
     </div>
 </div>
 
+<!-- Custom Modal -->
+<div id="c-modal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(5px); z-index:9999; display:flex; justify-content:center; align-items:center;">
+    <div style="background:var(--srf); padding:24px; border-radius:16px; border:2px solid var(--brd); max-width:85%; width:320px; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+        <p id="c-mod-txt" style="color:var(--t1); font-size:1.1rem; margin-bottom:20px; font-weight:600; line-height:1.4;"></p>
+        <div style="display:flex; gap:12px; justify-content:center;">
+            <button class="bs" id="c-mod-cancel" style="flex:1;">Cancel</button>
+            <button class="bp" id="c-mod-ok" style="flex:1;">OK</button>
+        </div>
+    </div>
+</div>
+
 <script>
+    function customConfirm(msg, onOk) {
+        document.getElementById('c-mod-txt').textContent = msg;
+        document.getElementById('c-modal').classList.remove('hidden');
+        document.getElementById('c-mod-cancel').classList.remove('hidden');
+        document.getElementById('c-mod-ok').onclick = () => { A.p('click'); document.getElementById('c-modal').classList.add('hidden'); onOk(); };
+        document.getElementById('c-mod-cancel').onclick = () => { A.p('click'); document.getElementById('c-modal').classList.add('hidden'); };
+    }
+
+    function customAlert(msg, onOk) {
+        document.getElementById('c-mod-txt').textContent = msg;
+        document.getElementById('c-modal').classList.remove('hidden');
+        document.getElementById('c-mod-cancel').classList.add('hidden');
+        document.getElementById('c-mod-ok').onclick = () => { A.p('click'); document.getElementById('c-modal').classList.add('hidden'); if(onOk) onOk(); };
+    }
+
 /* Audio */
 const A={c:null,m:false,
     init(){this.m=localStorage.getItem('bm')==='1';this._u();},
@@ -484,8 +510,13 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     $('hb-m').addEventListener('click',()=>{
         A.p('click');
         if(document.body.classList.contains('game-active')) {
-            if(!confirm("Are you sure you want to quit the current match?")) return;
+            customConfirm("Are you sure you want to quit the current match?", () => {
+                window.isQuitting = true;
+                goMenu();
+            });
+            return;
         }
+        window.isQuitting = true;
         goMenu();
     });
 
@@ -531,8 +562,8 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     
     function setupOnlineUI(){
         const bH=$('btn-host'), bJ=$('btn-join');
-        bH.onclick=()=>{ A.p('click'); isHost=true; wasRandom=false; bH.classList.add('on'); bJ.classList.remove('on'); $('ol-host-ui').classList.remove('hidden'); $('ol-join-ui').classList.add('hidden'); $('sf-grid').classList.remove('hidden'); $('bn').textContent='Start Match'; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; initPeer(); };
-        bJ.onclick=()=>{ A.p('click'); isHost=false; wasRandom=false; bJ.classList.add('on'); bH.classList.remove('on'); $('ol-join-ui').classList.remove('hidden'); $('ol-host-ui').classList.add('hidden'); $('sf-grid').classList.add('hidden'); $('bn').textContent='Connect & Join'; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; if(peer) peer.destroy(); peer=null; conn=null; $('ol-status').style.display='none'; };
+        bH.onclick=()=>{ A.p('click'); isHost=true; wasRandom=false; bH.classList.add('on'); bJ.classList.remove('on'); $('ol-host-ui').classList.remove('hidden'); $('ol-join-ui').classList.add('hidden'); $('sf-grid').classList.remove('hidden'); $('bn').textContent='Start Match'; $('bn').disabled=false; $('inp').disabled=false; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; initPeer(); };
+        bJ.onclick=()=>{ A.p('click'); isHost=false; wasRandom=false; bJ.classList.add('on'); bH.classList.remove('on'); $('ol-join-ui').classList.remove('hidden'); $('ol-host-ui').classList.add('hidden'); $('sf-grid').classList.add('hidden'); $('bn').textContent='Connect & Join'; $('bn').disabled=false; $('inp').disabled=false; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; if(peer) peer.destroy(); peer=null; conn=null; $('ol-status').style.display='none'; };
         if(isHost===false && $('ol-join-ui').classList.contains('hidden')===false) { /* already join */ } else { bH.click(); }
     }
 
@@ -558,6 +589,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     }
     
     function showDisconnectOverlay() {
+        if(window.isQuitting) return;
         if(document.body.classList.contains('game-active')) {
             active = false;
             if(turnTimer) { clearInterval(turnTimer); turnTimer = null; }
@@ -582,8 +614,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
                 };
             }
         } else {
-            alert('Opponent disconnected');
-            goMenu();
+            customAlert('Opponent disconnected', () => { goMenu(); });
         }
     }
 
@@ -704,7 +735,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             $('rnd-status').textContent = 'No players found.';
             $('rnd-status').style.color = 'var(--ros)';
             resetRandomUI();
-            alert('Matchmaking failed. No available players.');
+            customAlert('Matchmaking failed. No available players.');
         } else {
             setTimeout(searchLobby, 400);
         }
@@ -798,11 +829,11 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
     $('bn').addEventListener('click',()=>{
         A.p('click');
-        const nm=$('inp').value.trim()||`Player ${sIdx+1}`;if(!selC){alert('Pick a color!');return;}
+        const nm=$('inp').value.trim()||`Player ${sIdx+1}`;if(!selC){customAlert('Pick a color!');return;}
         
         if(mode==='online'){
             if(isHost){
-                if(!conn || !conn.open) { alert('Wait for a friend to connect first!'); return; }
+                if(!conn || !conn.open) { customAlert('Wait for a friend to connect first!'); return; }
                 const gInfo = window.guestInfo || {name:'Guest', color:'#f97316'};
                 players=[
                     {name:nm, color:selC, isAI:false, isOnline:false}, 
@@ -827,7 +858,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
                         $('bn').textContent='Waiting...';
                     });
                     conn.on('error', err=>{
-                        alert('Could not connect to room. Check the code.');
+                        customAlert('Could not connect to room. Check the code.');
                         $('bn').disabled=false; $('bn').textContent='Start Match';
                     });
                 });
@@ -1562,7 +1593,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
     $('b-re').addEventListener('click',()=>{
         A.p('click');
-        if(mode==='online' && !isHost){ alert('Waiting for Host to restart match...'); return; }
+        if(mode==='online' && !isHost){ customAlert('Waiting for Host to restart match...'); return; }
         if(mode==='online' && isHost) conn.send({type:'restart', hostName:players[0].name, hostColor:players[0].color});
         $('ov').classList.add('hidden');CG.ad(()=>launch());
     });
@@ -1572,6 +1603,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         CG.gp();stopConf();$('s-game').classList.add('hidden');$('s-setup').classList.add('hidden');$('s-menu').classList.remove('hidden');$('hb-m').classList.add('hidden');$('ov').classList.add('hidden');document.body.classList.remove('game-active','has-sidebar');
         if(peer)peer.destroy();peer=null;conn=null;
         if(isRandomMatchmaking) resetRandomUI();
+        setTimeout(() => { window.isQuitting = false; }, 500);
     }
 });
 </script>
