@@ -697,6 +697,17 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         
         if(peer) peer.destroy();
         peer = new Peer();
+        
+        let hasMovedNext = false;
+        let timeoutId = setTimeout(() => { moveNext(); }, 1000);
+        
+        function moveNext() {
+            if(hasMovedNext) return;
+            hasMovedNext = true;
+            clearTimeout(timeoutId);
+            nextLobby();
+        }
+
         peer.on('open', id => {
             const c = peer.connect('bingofest-lobby-' + lobbySuffix);
             
@@ -706,6 +717,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
             c.on('data', data => {
                 if(data.type === 'accept_join') {
+                    hasMovedNext = true; clearTimeout(timeoutId);
                     conn = c;
                     setupConn();
                     isHost = false;
@@ -714,20 +726,16 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
                 } else if(data.type === 'reject_join') {
                     c.close();
                     peer.destroy();
-                    nextLobby();
+                    moveNext();
                 }
             });
             
-            c.on('error', () => { nextLobby(); });
+            c.on('error', () => { moveNext(); });
         });
 
         peer.on('error', err => {
-            if(err.type === 'peer-unavailable') {
-                peer.destroy();
-                nextLobby();
-            } else {
-                nextLobby();
-            }
+            peer.destroy();
+            moveNext();
         });
     }
 
@@ -809,8 +817,11 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             });
         });
         
+        let hasAttemptedHost = false;
         peer.on('error', err => {
             if(err.type === 'unavailable-id') {
+                if(hasAttemptedHost) return;
+                hasAttemptedHost = true;
                 hostAttemptIdx++;
                 setTimeout(becomeLobbyHost, 300);
             }
