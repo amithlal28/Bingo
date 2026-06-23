@@ -481,7 +481,13 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
     document.querySelectorAll('.mc').forEach(c=>{c.addEventListener('click',()=>{A.p('click');mode=c.dataset.m;openSetup();});});
     $('hb-s').addEventListener('click',()=>A.tog());
-    $('hb-m').addEventListener('click',()=>{A.p('click');goMenu();});
+    $('hb-m').addEventListener('click',()=>{
+        A.p('click');
+        if(document.body.classList.contains('game-active')) {
+            if(!confirm("Are you sure you want to quit the current match?")) return;
+        }
+        goMenu();
+    });
 
     /* Setup */
     function openSetup(){
