@@ -1473,6 +1473,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK){this.s=wind
     /* Launch */
     function launch(){
         window.isQuitting = false;
+        const oc = $('online-counter'); if(oc) oc.classList.add('hidden');
         $('s-setup').classList.add('hidden');$('s-game').classList.remove('hidden');
         pd=[];active=false;filled=false;curP=0;stopConf();$('ov').classList.add('hidden');
         $('g-called').classList.add('hidden');
@@ -2296,6 +2297,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK){this.s=wind
 
     function goMenu(){
         window.isQuitting = true;
+        const oc = $('online-counter'); if(oc) oc.classList.remove('hidden');
         // Room match cleanup
         if(hostBackupTimer) { clearTimeout(hostBackupTimer); hostBackupTimer = null; }
         if(turnTimer) { clearInterval(turnTimer); turnTimer = null; }
