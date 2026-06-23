@@ -581,6 +581,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK){this.s=wind
             document.querySelector('.ctrls'),document.getElementById('g-called')];
         hudEls.forEach(el=>{
             if(el && !el.classList.contains('hidden')){
+                if(el.classList.contains('online-setup')) return; // Ignore floating overlay
                 const r=el.getBoundingClientRect();
                 hudH+=r.height+8; /* element height + margin */
             }
