@@ -677,7 +677,13 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         peer.on('error', err => {
             if(err.type === 'peer-unavailable') {
                 peer.destroy();
-                setTimeout(() => { becomeLobbyHost(randomLobbyIdx); }, 300);
+                let type = $('rnd-type').value;
+                if(type === 'any' && randomLobbyIdx % 3 !== 0) {
+                    nextLobby();
+                } else {
+                    const hostIdx = (type === 'any') ? Math.ceil(randomLobbyIdx / 3) : randomLobbyIdx;
+                    setTimeout(() => { becomeLobbyHost(hostIdx); }, 300);
+                }
             } else {
                 nextLobby();
             }
@@ -762,6 +768,17 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
     $('g-gs').querySelectorAll('.cb').forEach(b=>{b.addEventListener('click',()=>{A.p('click');$('g-gs').querySelectorAll('.cb').forEach(x=>x.classList.remove('on'));b.classList.add('on');gs=+b.dataset.s;});});
     $('g-df').querySelectorAll('.cb').forEach(b=>{b.addEventListener('click',()=>{A.p('click');$('g-df').querySelectorAll('.cb').forEach(x=>x.classList.remove('on'));b.classList.add('on');diff=b.dataset.d;});});
+
+    $('rnd-type').addEventListener('change', () => {
+        if(isRandomMatchmaking) {
+            A.p('click');
+            if(peer) { peer.destroy(); peer=null; }
+            conn=null;
+            randomLobbyIdx = 1;
+            $('rnd-status').textContent = 'Updating search...';
+            setTimeout(searchLobby, 400);
+        }
+    });
 
     function prm(){
         const defaultName = localStorage.getItem('bingo_name') || defaultFancyName;
