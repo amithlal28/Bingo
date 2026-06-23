@@ -896,11 +896,14 @@ const CG={s:null,init(){
         const btnLink = $('btn-invite-link');
         if(btnLink) {
             btnLink.textContent = '📋 Copy Link';
-            btnLink.onclick = () => {
+            btnLink.onclick = async () => {
                 A.p('click');
                 try {
                     let link = window.location.href.split('?')[0] + '?roomId=' + roomId;
-                    if(window.CrazyGames&&window.CrazyGames.SDK&&window.CrazyGames.SDK.game.inviteLink) link = window.CrazyGames.SDK.game.inviteLink({roomId});
+                    if(window.CrazyGames&&window.CrazyGames.SDK&&window.CrazyGames.SDK.game.inviteLink) {
+                        const generatedLink = await window.CrazyGames.SDK.game.inviteLink({roomId});
+                        if (generatedLink) link = generatedLink;
+                    }
                     navigator.clipboard.writeText(link).then(() => {
                         btnLink.textContent = '✅ Copied!';
                         setTimeout(() => { btnLink.textContent = '📋 Copy Link'; }, 2000);
