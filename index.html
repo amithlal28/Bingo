@@ -351,7 +351,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     try{if(CG.s)CG.s.game.sdkGameLoadingStop();}catch(e){}
     const $=id=>document.getElementById(id);
     const LT=['B','I','N','G','O'];
-    const CL=['#ef4444','#3b82f6','#22c55e','#f59e0b','#a855f7','#ec4899'];
+    const CL=['#06b6d4','#3b82f6','#22c55e','#f59e0b','#a855f7','#ec4899'];
     const BG_CL=['#00e5ff','#a855f7','#f43f5e','#fbbf24','#34d399','#818cf8'];
 
     /* Background Animation */
@@ -393,12 +393,25 @@ document.addEventListener('DOMContentLoaded',()=>{
         const gm=document.querySelector('.game-main');
         if(!gm) return;
         const gmRect=gm.getBoundingClientRect();
-        const hudH=100; /* approximate height of BINGO letters+turn+called+ctrls */
+        /* Measure actual HUD elements above the board */
+        let hudH=0;
+        const hudEls=[document.getElementById('g-lt'),document.getElementById('g-tu'),
+            document.querySelector('.ctrls'),document.getElementById('g-called')];
+        hudEls.forEach(el=>{
+            if(el && !el.classList.contains('hidden')){
+                const r=el.getBoundingClientRect();
+                hudH+=r.height+8; /* element height + margin */
+            }
+        });
+        /* Board label height */
+        const lbl=document.querySelector('.board-label');
+        if(lbl) hudH+=lbl.getBoundingClientRect().height+6;
+        hudH+=20; /* extra safety padding */
         const availH=gmRect.height-hudH;
         const availW=gmRect.width-16;
         const boardCount=wraps.length;
         const maxPerBoard=Math.min(availH, (availW - (boardCount-1)*8) / boardCount);
-        const sz=Math.max(150, Math.floor(maxPerBoard));
+        const sz=Math.max(120, Math.floor(maxPerBoard));
         document.documentElement.style.setProperty('--board-size', sz+'px');
     }
 
