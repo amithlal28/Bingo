@@ -845,7 +845,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
     function startRandomSearch() {
         if(!isRandomMatchmaking) return;
-        $('rnd-status').textContent = 'Scanning network...';
+        $('rnd-status').textContent = 'Connecting to server...';
         $('rnd-status').style.color = 'var(--ind)';
         
         initMqtt();
@@ -854,18 +854,28 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         window.hasGotReply = false;
         myMqttId = Math.random().toString(36).substr(2, 9);
         
-        mqttClient.subscribe(REPLY_TOPIC_PREFIX + myMqttId);
-        
-        setTimeout(() => {
+        function doSearch() {
             if(!isRandomMatchmaking || window.hasGotReply) return;
-            mqttClient.publish(PING_TOPIC, JSON.stringify({id: myMqttId, prefType: $('rnd-type').value}));
+            $('rnd-status').textContent = 'Scanning network...';
+            mqttClient.subscribe(REPLY_TOPIC_PREFIX + myMqttId);
             
-            window.pingTimerId = setTimeout(() => {
+            setTimeout(() => {
                 if(!isRandomMatchmaking || window.hasGotReply) return;
-                mqttClient.unsubscribe(REPLY_TOPIC_PREFIX + myMqttId);
-                becomeLobbyHost();
-            }, 1500);
-        }, 100);
+                mqttClient.publish(PING_TOPIC, JSON.stringify({id: myMqttId, prefType: $('rnd-type').value}));
+                
+                window.pingTimerId = setTimeout(() => {
+                    if(!isRandomMatchmaking || window.hasGotReply) return;
+                    mqttClient.unsubscribe(REPLY_TOPIC_PREFIX + myMqttId);
+                    becomeLobbyHost();
+                }, 1500);
+            }, 100);
+        }
+
+        if(mqttClient.connected) {
+            doSearch();
+        } else {
+            mqttClient.once('connect', doSearch);
+        }
     }
 
     $('bn').addEventListener('click',()=>{
