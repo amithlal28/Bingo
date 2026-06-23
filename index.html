@@ -492,7 +492,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     let mode='solo',gs=5,aiN=1,lpN=2,diff='easy';
     let players=[],sIdx=0,selC=null;
     let peer=null, conn=null, isHost=false, roomId='';
-    let searchQueue=[], searchIdx=0, hostAttemptIdx=1, isRandomMatchmaking=false, MAX_LOBBY=1;
+    let searchQueue=[], searchIdx=0, hostAttemptCount=0, isRandomMatchmaking=false, MAX_LOBBY=100;
     let isLocalReady=false, isOpponentReady=false;
     let turnTimer=null, timeLeft=30;
 
@@ -749,10 +749,10 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         if(!isRandomMatchmaking) return;
         let type = $('rnd-type').value;
         
-        if(hostAttemptIdx > MAX_LOBBY) {
+        if(hostAttemptCount >= MAX_LOBBY) {
             // Keep looping search for ALL types if we run out of host slots (acting as a queue)
-            searchIdx = 0; hostAttemptIdx = 1;
-            $('rnd-status').textContent = 'Lobby full. Waiting in queue...';
+            searchIdx = 0; hostAttemptCount = 0;
+            $('rnd-status').textContent = 'Servers full. Waiting in queue...';
             setTimeout(searchLobby, 1000);
             return;
         }
@@ -765,7 +765,9 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         window.hostType = type;
         if(type !== 'any') gs = parseInt(type);
         
-        peer = new Peer('bingofest-lobby-' + type + '-' + hostAttemptIdx);
+        hostAttemptCount++;
+        let randomHostIdx = Math.floor(Math.random() * MAX_LOBBY) + 1;
+        peer = new Peer('bingofest-lobby-' + type + '-' + randomHostIdx);
         
         peer.on('open', id => {});
         
@@ -816,7 +818,6 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             if(err.type === 'unavailable-id') {
                 if(hasAttemptedHost) return;
                 hasAttemptedHost = true;
-                hostAttemptIdx++;
                 setTimeout(becomeLobbyHost, 300);
             }
         });
@@ -845,6 +846,9 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             s.addEventListener('click',()=>{A.p('click');p.querySelectorAll('.sw').forEach(x=>x.classList.remove('sel'));s.classList.add('sel');selC=c;});}p.appendChild(s);});
     }
 
+    function shuffle(n){const a=Array.from({length:n},(_,i)=>i+1);for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+    function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
     function startRandomSearch() {
         let type = $('rnd-type').value;
         searchQueue = [];
@@ -857,7 +861,8 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             for(let i=1; i<=MAX_LOBBY; i++) searchQueue.push(`${type}-${i}`);
             for(let i=1; i<=MAX_LOBBY; i++) searchQueue.push(`any-${i}`);
         }
-        searchIdx = 0;
+        searchQueue = shuffleArr(searchQueue);
+        searchIdx = 0; hostAttemptCount = 0;
         searchLobby();
     }
 
