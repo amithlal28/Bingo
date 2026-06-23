@@ -523,6 +523,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     /* Setup */
     function openSetup(){
         $('s-menu').classList.add('hidden');$('s-setup').classList.remove('hidden');$('hb-m').classList.remove('hidden');
+        $('bn').disabled = false; $('bb').disabled = false; $('inp').disabled = false;
         if(mode==='solo'){$('su-t').textContent='Solo Setup';$('sf-ai').classList.remove('hidden');$('sf-pc').classList.add('hidden');$('sf-d').classList.remove('hidden');$('sf-pf').classList.remove('hidden');$('sf-online').classList.add('hidden');$('sf-random').classList.add('hidden');$('sf-grid').classList.remove('hidden');$('bn').textContent='Start Game';sIdx=0;players=[];prm();}
         else if(mode==='local'){$('su-t').textContent='Pass & Play';$('sf-ai').classList.add('hidden');$('sf-pc').classList.remove('hidden');$('sf-d').classList.add('hidden');$('sf-pf').classList.remove('hidden');$('sf-online').classList.add('hidden');$('sf-random').classList.add('hidden');$('sf-grid').classList.remove('hidden');$('bn').textContent='Next Player';sIdx=0;players=[];prm();}
         else if(mode==='online') {
