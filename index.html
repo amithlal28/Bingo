@@ -28,8 +28,8 @@
 
         /* Panel: the main container */
         .panel{background:rgba(17,24,39,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-            border:1px solid var(--brd2);border-radius:20px;padding:1rem;
-            width:100%;max-width:480px;box-shadow:var(--sh-l),var(--glow);position:relative;z-index:10;
+            border:1px solid var(--brd2);border-radius:20px;padding:1.25rem;
+            width:100%;max-width:560px;box-shadow:var(--sh-l),var(--glow);position:relative;z-index:10;
             display:flex;flex-direction:column;max-height:98vh;max-height:98dvh;overflow-y:auto;overflow-x:hidden;
             animation:fu .4s ease forwards;}
 
@@ -62,8 +62,8 @@
 
         @keyframes fu{from{opacity:0;transform:translateY(10px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 
-        /* HUD */
-        .hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;}
+        /* HUD - floating over background */
+        .hud{position:fixed;top:12px;left:12px;display:flex;gap:6px;align-items:center;z-index:50;}
         .hb{background:var(--srf2);border:1px solid var(--brd);color:var(--t2);padding:5px 12px;border-radius:8px;
             font-size:.72rem;font-weight:600;cursor:pointer;transition:all .2s;}
         .hb:hover{background:var(--srf);color:var(--t1);border-color:var(--acc);}
@@ -106,15 +106,23 @@
         .bs:hover{background:var(--srf);border-color:var(--acc);}
 
         /* Mode cards */
-        .mc{background:var(--srf2);border:1.5px solid var(--brd);border-radius:14px;padding:.7rem;margin-bottom:.5rem;
-            cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:.7rem;text-align:left;}
-        .mc:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:var(--glow),var(--sh-m);}
-        .mi{font-size:1.4rem;background:var(--bg2);width:42px;height:42px;border-radius:10px;display:flex;justify-content:center;
+        .mc{background:var(--srf2);border:1.5px solid var(--brd);border-radius:14px;padding:.85rem;
+            margin-bottom:.55rem;cursor:pointer;transition:all .25s;display:flex;align-items:center;
+            gap:.8rem;text-align:left;position:relative;overflow:hidden;}
+        .mc::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:4px 0 0 4px;
+            background:var(--card-accent,var(--acc));opacity:0;transition:opacity .25s;}
+        .mc:hover{border-color:var(--card-accent,var(--acc));transform:translateY(-2px);
+            box-shadow:0 0 20px color-mix(in srgb, var(--card-accent,var(--acc)) 25%, transparent),var(--sh-m);}
+        .mc:hover::before{opacity:1;}
+        .mc.mc-featured{border-color:rgba(168,85,247,0.3);background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(0,229,255,0.05));}
+        .mi{font-size:1.5rem;background:var(--bg2);width:46px;height:46px;border-radius:12px;display:flex;justify-content:center;
             align-items:center;flex-shrink:0;border:1px solid var(--brd);transition:all .25s;}
-        .mc:hover .mi{background:linear-gradient(135deg,var(--acc),var(--acc2));border-color:transparent;
-            box-shadow:0 0 15px rgba(0,229,255,0.3);}
-        .md h3{font-size:.85rem;font-weight:700;margin-bottom:.1rem;color:var(--t1);}
-        .md p{font-size:.68rem;color:var(--t3);}
+        .mc:hover .mi{background:linear-gradient(135deg,var(--card-accent,var(--acc)),color-mix(in srgb, var(--card-accent,var(--acc)) 60%, var(--acc2)));border-color:transparent;
+            box-shadow:0 0 15px color-mix(in srgb, var(--card-accent,var(--acc)) 40%, transparent);}
+        .md h3{font-size:.9rem;font-weight:700;margin-bottom:.15rem;color:var(--t1);}
+        .md p{font-size:.72rem;color:var(--t3);line-height:1.3;}
+        .mc-badge{position:absolute;top:8px;right:10px;font-size:.55rem;font-weight:700;text-transform:uppercase;
+            letter-spacing:.8px;padding:2px 8px;border-radius:6px;color:white;}
 
         /* BINGO Letters */
         .ltrs{display:flex;justify-content:center;gap:6px;margin-bottom:8px;}
@@ -207,6 +215,17 @@
             transform: translateY(-2px) scale(1.02);
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 5px var(--grn); transform: scale(1); }
+            50% { box-shadow: 0 0 20px var(--grn), 0 0 40px var(--grn); transform: scale(1.05); }
+            100% { box-shadow: 0 0 5px var(--grn); transform: scale(1); }
+        }
+        .bp.glow {
+            animation: pulseGlow 1.5s infinite;
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            border-color: #34d399 !important;
+            color: white !important;
+        }
 
         /* Overlay */
         .ov{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,14,23,0.85);
@@ -239,29 +258,64 @@
         ::-webkit-scrollbar{width:4px;height:4px;}
         ::-webkit-scrollbar-track{background:transparent;}
         ::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:4px;}
+        .online-counter {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--t2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 50;
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 6px #22c55e;
+            animation: onlinePulse 2s ease-in-out infinite;
+        }
+        @keyframes onlinePulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 6px #22c55e; }
+            50% { opacity: 0.6; box-shadow: 0 0 12px #22c55e; }
+        }
     </style>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <canvas id="bg-canvas"></canvas>
-<div class="panel" id="app">
-    <div class="hud">
-        <button class="hb" id="hb-m">◀ Menu</button>
-        <button class="hb" id="hb-s">🔊 Sound</button>
-    </div>
 
+<!-- HUD - floating over background -->
+<div class="hud">
+    <button class="hb" id="hb-m">◀ Menu</button>
+    <button class="hb" id="hb-s">🔊 Sound</button>
+</div>
+<div id="online-counter" class="online-counter"><span class="online-dot"></span><span id="online-count">-</span> Online</div>
+
+<div class="panel" id="app">
     <!-- MENU -->
     <div id="s-menu">
         <h1 class="title">Bingo Festival</h1>
+        <p style="text-align:center;color:var(--t3);font-size:.78rem;margin:-0.4rem 0 1rem;letter-spacing:.3px;">Pick a mode and start playing!</p>
         <div style="margin-bottom: 15px; background: var(--srf); padding: 12px; border-radius: 12px; border: 1px solid var(--brd);">
             <label class="ol" for="menu-name">Your Name</label>
             <input type="text" id="menu-name" placeholder="Enter your name" maxlength="15" style="width: 100%; text-align: center; background:var(--srf2); border:1.5px solid var(--brd); padding:7px; border-radius:8px; color:white; font-size:1rem; outline:none; margin-top:0.4rem;">
         </div>
-        <div class="mc" data-m="solo"><div class="mi">🤖</div><div class="md"><h3>Solo vs AI</h3><p>Call numbers to race for BINGO against bots.</p></div></div>
-        <div class="mc" data-m="local"><div class="mi">👥</div><div class="md"><h3>Pass & Play</h3><p>Play with friends on the same device.</p></div></div>
-        <div class="mc" data-m="online"><div class="mi">🌐</div><div class="md"><h3>Online Room Match</h3><p>Play against a friend using a room code.</p></div></div>
-        <div class="mc" data-m="random"><div class="mi">🎲</div><div class="md"><h3>Online Random Match</h3><p>Automatically match with a random player.</p></div></div>
+        <div class="mc mc-featured" data-m="random" style="--card-accent:#a855f7;"><div class="mi">🎲</div><div class="md"><h3>Quick Match</h3><p>Jump in and play against a random opponent online.</p></div><span class="mc-badge" style="background:linear-gradient(135deg,#a855f7,#7c3aed);">Popular</span></div>
+        <div class="mc" data-m="online" style="--card-accent:#3b82f6;"><div class="mi">🌐</div><div class="md"><h3>Play with Friends</h3><p>Create a private room and invite a friend with a code.</p></div></div>
+        <div class="mc" data-m="solo" style="--card-accent:#f59e0b;"><div class="mi">🤖</div><div class="md"><h3>Play against Bots</h3><p>Practice your skills in a solo match against AI opponents.</p></div></div>
+        <div class="mc" data-m="local" style="--card-accent:#10b981;"><div class="mi">📱</div><div class="md"><h3>Pass &amp; Play</h3><p>Share one device and take turns with friends nearby.</p></div></div>
     </div>
 
     <!-- SETUP -->
@@ -363,7 +417,8 @@
         <p id="ov-p">You won!</p>
         <div class="ebs" id="ov-bds"></div>
         <button class="bp" id="b-re">Rematch</button>
-        <button class="bs" id="b-mm">Main Menu</button>
+        <button class="bp hidden" id="b-nm" style="margin-top: 8px;">New Match</button>
+        <button class="bs" id="b-mm" style="margin-top: 8px;">Main Menu</button>
     </div>
 </div>
 
@@ -414,7 +469,7 @@ const A={c:null,m:false,
 const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=window.CrazyGames.SDK;},
     gs(){try{this.s&&this.s.game.gameplayStart();}catch(e){}},
     gp(){try{this.s&&this.s.game.gameplayStop();}catch(e){}},
-    ad(cb){if(!this.s||!this.s.ad){if(cb)cb();return;}try{const w=A.m;this.s.ad.requestAd("midgame",{adStarted:()=>{A.m=true;},adFinished:()=>{A.m=w;if(cb)cb();},adError:()=>{A.m=w;if(cb)cb();}});}catch(e){if(cb)cb();}}
+    ad(cb){if(cb)cb();}
 };
 
     document.addEventListener('DOMContentLoaded',()=>{
@@ -492,10 +547,11 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
     let mode='solo',gs=5,aiN=1,lpN=2,diff='easy';
     let players=[],sIdx=0,selC=null;
-    let peer=null, conn=null, isHost=false, roomId='';
+    let rtcPeerConnection=null, conn=null, isHost=false, roomId='';
     let isRandomMatchmaking=false;
-    let mqttClient=null, myMqttId='', isMqttHost=false;
-    const PING_TOPIC = 'amithlal28_bingofest_v1/ping', REPLY_TOPIC_PREFIX = 'amithlal28_bingofest_v1/reply/';
+    const SUPABASE_URL = 'https://aronekhbwtwqsjsuefle.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyb25la2hid3R3cXNqc3VlZmxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjM5MzUsImV4cCI6MjA5Nzc5OTkzNX0.x96nPquFuSURxFzI_9j_Ir5iNXuYfSf0zoZPYKpOuqc';
+    let supabaseClient=null, matchmakingChannel=null;
     let isLocalReady=false, isOpponentReady=false;
     let turnTimer=null, timeLeft=30;
 
@@ -556,8 +612,9 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             sIdx=0; players=[];
             isHost = false;
             wasRandom = true;
-            if(peer) { peer.destroy(); peer=null; }
-            conn=null;
+            // Clean up previous connections without triggering disconnect overlay
+            if(rtcPeerConnection) { rtcPeerConnection.onconnectionstatechange = null; rtcPeerConnection.close(); rtcPeerConnection=null; }
+            if(conn) { try { conn.close(); } catch(e) {} conn=null; }
             $('rnd-status').textContent='Ready to search.';
             $('rnd-status').style.color='var(--t2)';
             prm();
@@ -566,25 +623,154 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     
     function setupOnlineUI(){
         const bH=$('btn-host'), bJ=$('btn-join');
-        bH.onclick=()=>{ A.p('click'); isHost=true; wasRandom=false; bH.classList.add('on'); bJ.classList.remove('on'); $('ol-host-ui').classList.remove('hidden'); $('ol-join-ui').classList.add('hidden'); $('sf-grid').classList.remove('hidden'); $('bn').textContent='Start Match'; $('bn').disabled=false; $('inp').disabled=false; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; initPeer(); };
-        bJ.onclick=()=>{ A.p('click'); isHost=false; wasRandom=false; bJ.classList.add('on'); bH.classList.remove('on'); $('ol-join-ui').classList.remove('hidden'); $('ol-host-ui').classList.add('hidden'); $('sf-grid').classList.add('hidden'); $('bn').textContent='Connect & Join'; $('bn').disabled=false; $('inp').disabled=false; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; if(peer) peer.destroy(); peer=null; conn=null; $('ol-status').style.display='none'; };
+        bH.onclick=()=>{ A.p('click'); isHost=true; wasRandom=false; bH.classList.add('on'); bJ.classList.remove('on'); $('ol-host-ui').classList.remove('hidden'); $('ol-join-ui').classList.add('hidden'); $('sf-grid').classList.remove('hidden'); $('bn').textContent='Start Match'; $('bn').disabled=false; $('inp').disabled=false; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; initWebRTCHost(); };
+        bJ.onclick=()=>{ A.p('click'); isHost=false; wasRandom=false; bJ.classList.add('on'); bH.classList.remove('on'); $('ol-join-ui').classList.remove('hidden'); $('ol-host-ui').classList.add('hidden'); $('sf-grid').classList.add('hidden'); $('bn').textContent='Connect & Join'; $('bn').disabled=false; $('inp').disabled=false; $('inp').value=localStorage.getItem('bingo_name')||defaultFancyName; if(rtcPeerConnection) { rtcPeerConnection.close(); rtcPeerConnection=null; } conn=null; $('ol-status').style.display='none'; };
         if(isHost===false && $('ol-join-ui').classList.contains('hidden')===false) { /* already join */ } else { bH.click(); }
     }
 
-    function initPeer(){
-        if(peer) peer.destroy();
+    function wrapDataChannel(channel) {
+        let listeners = { 'data': [], 'open': [], 'close': [], 'error': [] };
+        channel.onmessage = e => {
+            try {
+                const data = JSON.parse(e.data);
+                listeners['data'].forEach(cb => cb(data));
+            } catch(err) {}
+        };
+        channel.onopen = () => { listeners['open'].forEach(cb => cb()); };
+        channel.onclose = () => { listeners['close'].forEach(cb => cb()); };
+        channel.onerror = (err) => { listeners['error'].forEach(cb => cb(err)); };
+        
+        return {
+            send: (data) => { if(channel.readyState === 'open') channel.send(JSON.stringify(data)); },
+            on: (event, cb) => { listeners[event].push(cb); },
+            close: () => channel.close(),
+            get open() { return channel.readyState === 'open'; }
+        };
+    }
+
+    function setupWebRTCHost(channelId, onChannelReady, onDataMessage) {
+        if(rtcPeerConnection) { rtcPeerConnection.onconnectionstatechange = null; rtcPeerConnection.close(); }
+        rtcPeerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+        const thisPC = rtcPeerConnection;
+        
+        rtcPeerConnection.onconnectionstatechange = () => {
+            if(thisPC !== rtcPeerConnection) return;
+            const st = rtcPeerConnection.connectionState;
+            if (st === 'disconnected' || st === 'failed') {
+                showDisconnectOverlay();
+            }
+        };
+        
+        const signalChannel = supabaseClient.channel(channelId);
+        let guestUserId = null;
+        
+        rtcPeerConnection.ondatachannel = e => {
+            conn = wrapDataChannel(e.channel);
+            if(onDataMessage) conn.on('data', onDataMessage);
+            conn.on('open', () => { onChannelReady(); });
+        };
+        
+        signalChannel.on('broadcast', { event: 'webrtc_signal' }, async (payload) => {
+            const data = payload.payload;
+            if(data.targetUserId && data.targetUserId !== window.myUserId) return;
+            try {
+                if(data.type === 'offer') {
+                    guestUserId = data.senderUserId;
+                    await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+                    const answer = await rtcPeerConnection.createAnswer();
+                    await rtcPeerConnection.setLocalDescription(answer);
+                    signalChannel.send({ type: 'broadcast', event: 'webrtc_signal', payload: { targetUserId: guestUserId, senderUserId: window.myUserId, type: 'answer', sdp: rtcPeerConnection.localDescription } });
+                } else if (data.type === 'ice' && data.candidate) {
+                    await rtcPeerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                }
+            } catch(e) { console.error(e); }
+        });
+        
+        rtcPeerConnection.onicecandidate = e => {
+            if(e.candidate && guestUserId) {
+                signalChannel.send({ type: 'broadcast', event: 'webrtc_signal', payload: { targetUserId: guestUserId, senderUserId: window.myUserId, type: 'ice', candidate: e.candidate } });
+            }
+        };
+        
+        signalChannel.subscribe();
+        return signalChannel;
+    }
+
+    function setupWebRTCGuest(channelId, targetUserId, onChannelReady, onError, onDataMessage) {
+        if(rtcPeerConnection) { rtcPeerConnection.onconnectionstatechange = null; rtcPeerConnection.close(); }
+        rtcPeerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+        const thisPC = rtcPeerConnection;
+        
+        rtcPeerConnection.onconnectionstatechange = () => {
+            if(thisPC !== rtcPeerConnection) return;
+            const st = rtcPeerConnection.connectionState;
+            if (st === 'disconnected' || st === 'failed') {
+                showDisconnectOverlay();
+            }
+        };
+        
+        const signalChannel = supabaseClient.channel(channelId);
+        const dc = rtcPeerConnection.createDataChannel('bingo');
+        conn = wrapDataChannel(dc);
+        if(onDataMessage) conn.on('data', onDataMessage);
+        
+        conn.on('open', () => { onChannelReady(); });
+        conn.on('error', () => { if(onError) onError(); });
+        
+        let connectionFailedTimeout = setTimeout(() => {
+            if(!conn.open && onError) onError();
+        }, 15000);
+        conn.on('open', () => clearTimeout(connectionFailedTimeout));
+        
+        signalChannel.on('broadcast', { event: 'webrtc_signal' }, async (payload) => {
+            const data = payload.payload;
+            if(data.targetUserId && data.targetUserId !== window.myUserId) return;
+            try {
+                if (data.type === 'answer') {
+                    await rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+                } else if (data.type === 'ice' && data.candidate) {
+                    await rtcPeerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                }
+            } catch(e) { console.error(e); }
+        });
+        
+        rtcPeerConnection.onicecandidate = e => {
+            if(e.candidate) {
+                signalChannel.send({ type: 'broadcast', event: 'webrtc_signal', payload: { targetUserId: targetUserId, senderUserId: window.myUserId, type: 'ice', candidate: e.candidate } });
+            }
+        };
+        
+        signalChannel.subscribe(async (status) => {
+            if(status === 'SUBSCRIBED') {
+                try {
+                    const offer = await rtcPeerConnection.createOffer();
+                    await rtcPeerConnection.setLocalDescription(offer);
+                    signalChannel.send({ type: 'broadcast', event: 'webrtc_signal', payload: { targetUserId: targetUserId, senderUserId: window.myUserId, type: 'offer', sdp: rtcPeerConnection.localDescription } });
+                } catch(e) { if(onError) onError(); }
+            } else if(status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+                if(onError) onError();
+            }
+        });
+        return signalChannel;
+    }
+
+    function initWebRTCHost(){
+        if(rtcPeerConnection) { rtcPeerConnection.close(); }
         roomId = Math.random().toString(36).substr(2, 4).toUpperCase();
         $('ol-room-code').textContent = 'Loading...';
-        peer = new Peer('bingo-fest-' + roomId);
-        peer.on('open', id => { $('ol-room-code').textContent = roomId; });
-        peer.on('connection', c => {
-            if(conn && conn.open) return; // Only 1 connection allowed
-            conn = c;
-            setupConn();
-            $('ol-status').style.display='block';
-            $('ol-status').textContent='Friend connected! Ready to start.';
-            $('ol-status').style.color='var(--grn)';
+        
+        window.myUserId = window.myUserId || 'user_' + Math.random().toString(36).substr(2, 9);
+        if(!supabaseClient) { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
+        
+        setupWebRTCHost('bingofest_room_' + roomId, () => {
+            if(conn && conn.open) {
+                setupConn();
+                $('ol-status').style.display='block';
+                $('ol-status').textContent='Friend connected! Ready to start.';
+                $('ol-status').style.color='var(--grn)';
+            }
         });
+        $('ol-room-code').textContent = roomId;
     }
     
     function setupConn(){
@@ -607,31 +793,40 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             if(turnTimer) { clearInterval(turnTimer); turnTimer = null; }
             pd.forEach(p=>{ if(p.cellEls) p.cellEls.forEach(c=>c.classList.add('off')); });
             CG.gp();
-            $('ov').classList.remove('hidden');
             A.p('lose');
-            $('ov-e').textContent='🔌';
-            $('ov-h').textContent='Disconnected';
-            $('ov-h').className='text-lose';
-            $('ov-p').textContent='Your opponent has disconnected.';
-            $('ov-bds').innerHTML='';
             
             if(wasRandom) {
-                $('b-re').textContent = 'New Match';
-                $('b-re').onclick = () => {
-                    A.p('click');
-                    $('ov').classList.add('hidden');
+                if(!$('ov').classList.contains('hidden')) $('ov').classList.add('hidden');
+                customAlert('Opponent disconnected! Returning to queue...', () => {
                     goMenu();
                     mode = 'random';
                     openSetup();
-                };
+                });
+            } else {
+                $('ov').classList.remove('hidden');
+                $('ov-e').textContent='🔌';
+                $('ov-h').textContent='Disconnected';
+                $('ov-h').className='text-lose';
+                $('ov-p').textContent='Your opponent has disconnected.';
+                $('ov-bds').innerHTML='';
             }
         } else {
-            customAlert('Opponent disconnected', () => { goMenu(); });
+            if(wasRandom) {
+                customAlert('Opponent disconnected! Returning to queue...', () => {
+                    goMenu();
+                    mode = 'random';
+                    openSetup();
+                });
+            } else {
+                customAlert('Opponent disconnected', () => { goMenu(); });
+            }
         }
     }
 
     function handleOnlineMsg(data){
-        if(data.type==='join' && isHost){
+        if(data.type==='quit') {
+            showDisconnectOverlay();
+        } else if(data.type==='join' && isHost){
             let gColor = data.guestColor;
             if(gColor === selC) {
                 const unused = CL.filter(c => c !== selC);
@@ -666,121 +861,125 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             if(!$('ov').classList.contains('hidden')) {
                 if(!window.localRematchReq) {
                     $('b-re').textContent = 'Accept Rematch';
+                    $('b-re').classList.add('glow');
                 } else if(isHost) {
                     conn.send({type:'restart', hostName:players[0].name, hostColor:players[0].color});
-                    $('ov').classList.add('hidden');CG.ad(()=>launch());
+                    $('ov').classList.add('hidden'); launch();
                 }
             }
         } else if(data.type==='restart'){
-            $('ov').classList.add('hidden');CG.ad(()=>launch());
+            $('ov').classList.add('hidden'); launch();
         }
+    }
+
+    function handleOpponentCall(num) {
+        if(!active) return;
+        
+        // Locally, players[0] is always "me" and players[1] is always the online opponent
+        const opponentIndex = 1;
+        
+        A.p('mark');
+        showCalled(num, players[opponentIndex].color);
+        markNumOnAll(num, opponentIndex);
+        
+        const winners = checkAllWin();
+        if(winners !== null) { 
+            endGame(winners); 
+            return; 
+        }
+        
+        curP = 0; // Back to my turn
+        showTurn();
     }
 
     function resetRandomUI() {
         isRandomMatchmaking = false;
-        isMqttHost = false;
-        clearTimeout(window.pingTimerId);
-        clearTimeout(window.hostTimerId);
+        window.matchFound = false;
+        window.isCurrentlyHosting = false;
+        if(matchmakingChannel && supabaseClient) {
+            try { matchmakingChannel.untrack(); } catch(e) {}
+            supabaseClient.removeChannel(matchmakingChannel);
+            matchmakingChannel = null;
+        }
+        if(window._signalChannel && supabaseClient) {
+            supabaseClient.removeChannel(window._signalChannel);
+            window._signalChannel = null;
+        }
         $('bn').disabled=false;
         $('bb').disabled=false;
         $('inp').disabled=false;
         $('bn').textContent='Find Match';
-        if(peer) { peer.destroy(); peer=null; }
+        if(rtcPeerConnection) { rtcPeerConnection.onconnectionstatechange = null; rtcPeerConnection.close(); rtcPeerConnection=null; }
         conn=null;
     }
 
-    function initMqtt() {
-        if(!mqttClient) {
-            mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-            mqttClient.on('connect', () => { mqttClient.subscribe(PING_TOPIC); });
-            mqttClient.on('message', (topic, message) => {
-                if(!isRandomMatchmaking) return;
-                try {
-                    const msg = JSON.parse(message.toString());
-                    if(topic === PING_TOPIC) {
-                        if(isMqttHost && !window.mqttMatched) {
-                            let myType = window.hostType;
-                            let theirPref = msg.prefType;
-                            let isCompatible = false;
-                            if(theirPref === 'any') isCompatible = true;
-                            else if(myType === 'any' || myType === theirPref) isCompatible = true;
-                            
-                            if(isCompatible) {
-                                mqttClient.publish(REPLY_TOPIC_PREFIX + msg.id, JSON.stringify({peerId: peer.id, type: myType}));
-                            }
-                        }
-                    } else if(topic.startsWith(REPLY_TOPIC_PREFIX) && !isMqttHost) {
-                        if(window.hasGotReply) return;
-                        window.hasGotReply = true;
-                        clearTimeout(window.pingTimerId);
-                        
-                        $('rnd-status').textContent = 'Match Found! Connecting...';
-                        $('rnd-status').style.color = 'var(--grn)';
-                        
-                        if(peer) peer.destroy();
-                        peer = new Peer();
-                        peer.on('open', () => {
-                            const c = peer.connect(msg.peerId);
-                            c.on('open', () => {
-                                c.send({type: 'request_join', prefType:$('rnd-type').value, guestName:$('inp').value.trim()||'Player 2', guestColor:selC});
-                            });
-                            c.on('data', data => {
-                                if(data.type === 'accept_join') {
-                                    conn = c; setupConn(); isHost = false;
-                                    $('rnd-status').textContent = 'Joining match...';
-                                } else if(data.type === 'reject_join') {
-                                    c.close(); peer.destroy(); startRandomSearch();
-                                }
-                            });
-                            c.on('error', () => { peer.destroy(); startRandomSearch(); });
-                        });
-                        peer.on('error', err => { peer.destroy(); startRandomSearch(); });
-                    }
-                } catch(e){}
-            });
-        }
+    function connectToHost(targetPeerId, targetUserId, signalChannelId) {
+        $('rnd-status').textContent = 'Match Found! Connecting...';
+        $('rnd-status').style.color = 'var(--grn)';
+        
+        window._signalChannel = setupWebRTCGuest(signalChannelId, targetUserId, 
+            () => { 
+                conn.send({type: 'request_join', prefType:$('rnd-type').value, guestName:$('inp').value.trim()||'Player 2', guestColor:selC, targetUserId: targetUserId});
+            }, 
+            () => { 
+                window.matchFound = false;
+                if(isRandomMatchmaking) setTimeout(startRandomSearch, 500);
+            }, 
+            (data) => { 
+                if(data.type === 'accept_join') {
+                    isHost = false;
+                    $('rnd-status').textContent = 'Joining match...';
+                    // Replace the matchmaking data listener with the game handler
+                    conn.on('data', d => handleOnlineMsg(d));
+                    conn.on('close', () => showDisconnectOverlay());
+                } else if(data.type === 'reject_join') {
+                    if(rtcPeerConnection) { rtcPeerConnection.onconnectionstatechange = null; rtcPeerConnection.close(); rtcPeerConnection = null; }
+                    conn = null;
+                    window.matchFound = false;
+                    if(isRandomMatchmaking) setTimeout(startRandomSearch, 500);
+                }
+            }
+        );
     }
 
-    function becomeLobbyHost() {
-        if(!isRandomMatchmaking) return;
+    async function becomeSupabaseHost() {
+        if(!isRandomMatchmaking || window.matchFound) return;
         $('rnd-status').textContent = `Waiting for opponent...`;
         $('rnd-status').style.color = 'var(--amb)';
-        if(peer) peer.destroy();
+        
+        if(rtcPeerConnection) { rtcPeerConnection.onconnectionstatechange = null; rtcPeerConnection.close(); }
         
         let type = $('rnd-type').value;
         window.hostType = type;
         if(type !== 'any') gs = parseInt(type);
         
-        let uniquePeerId = 'bingofest-peer-' + Math.random().toString(36).substr(2, 9);
-        peer = new Peer(uniquePeerId);
+        const mySignalChannelId = 'signal_' + window.myUserId + '_' + Date.now();
         
-        peer.on('open', id => {
-            isMqttHost = true;
-            window.mqttMatched = false;
+        window.isCurrentlyHosting = true;
+        await matchmakingChannel.track({
+            userId: window.myUserId,
+            isHost: true,
+            peerId: 'unused',
+            signalChannelId: mySignalChannelId,
+            prefType: type
         });
         
-        let randomHostWait = 4000 + Math.floor(Math.random() * 4000);
-        window.hostTimerId = setTimeout(() => {
-            if(!window.mqttMatched && isRandomMatchmaking) {
-                isMqttHost = false;
-                if(peer) peer.destroy();
-                startRandomSearch();
-            }
-        }, randomHostWait);
-
-        peer.on('connection', c => {
-            c.on('data', data => {
+        window._signalChannel = setupWebRTCHost(mySignalChannelId, 
+            () => { }, 
+            async (data) => {
                 if(data.type === 'request_join') {
-                    if(conn && conn.open) {
-                        c.send({type: 'reject_join'});
+                    if(window.matchFound) {
+                        conn.send({type: 'reject_join'});
                     } else {
-                        window.mqttMatched = true;
-                        isMqttHost = false;
-                        clearTimeout(window.hostTimerId);
-                        conn = c;
-                        c.send({type: 'accept_join'});
-                        setupConn();
+                        window.matchFound = true;
+                        window.isCurrentlyHosting = false;
+                        conn.send({type: 'accept_join'});
+                        // Replace matchmaking data listener with game handler
+                        conn.on('data', d => handleOnlineMsg(d));
+                        conn.on('close', () => showDisconnectOverlay());
                         isHost = true;
+                        
+                        try { await matchmakingChannel.untrack(); } catch(e) {}
                         
                         $('rnd-status').textContent = 'Match Found! Starting...';
                         $('rnd-status').style.color = 'var(--grn)';
@@ -810,12 +1009,8 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
                         }, 500);
                     }
                 }
-            });
-        });
-        
-        peer.on('error', err => {
-            if(err.type === 'unavailable-id') setTimeout(becomeLobbyHost, 300);
-        });
+            }
+        );
     }
 
     $('g-gs').querySelectorAll('.cb').forEach(b=>{b.addEventListener('click',()=>{A.p('click');$('g-gs').querySelectorAll('.cb').forEach(x=>x.classList.remove('on'));b.classList.add('on');gs=+b.dataset.s;});});
@@ -824,8 +1019,8 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
     $('rnd-type').addEventListener('change', () => {
         if(isRandomMatchmaking) {
             A.p('click');
-            if(peer) { peer.destroy(); peer=null; }
-            conn=null;
+            if(rtcPeerConnection) { rtcPeerConnection.close(); rtcPeerConnection=null; }
+            if(conn) { conn.close(); conn=null; }
             $('rnd-status').textContent = 'Updating search...';
             setTimeout(() => { startRandomSearch(); }, 400);
         }
@@ -841,41 +1036,90 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             s.addEventListener('click',()=>{A.p('click');p.querySelectorAll('.sw').forEach(x=>x.classList.remove('sel'));s.classList.add('sel');selC=c;});}p.appendChild(s);});
     }
 
-    function shuffle(n){const a=Array.from({length:n},(_,i)=>i+1);for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-
     function startRandomSearch() {
         if(!isRandomMatchmaking) return;
-        $('rnd-status').textContent = 'Connecting to server...';
+        $('rnd-status').textContent = 'Connecting to lobby...';
         $('rnd-status').style.color = 'var(--ind)';
         
-        initMqtt();
+        // Clean up any previous WebRTC state without triggering disconnect
+        if(rtcPeerConnection) { rtcPeerConnection.onconnectionstatechange = null; rtcPeerConnection.close(); rtcPeerConnection = null; }
+        if(conn) { try { conn.close(); } catch(e) {} conn = null; }
+        if(window._signalChannel && supabaseClient) {
+            supabaseClient.removeChannel(window._signalChannel);
+            window._signalChannel = null;
+        }
+        if(matchmakingChannel && supabaseClient) {
+            try { matchmakingChannel.untrack(); } catch(e) {}
+            supabaseClient.removeChannel(matchmakingChannel);
+            matchmakingChannel = null;
+        }
         
-        isMqttHost = false;
-        window.hasGotReply = false;
-        myMqttId = Math.random().toString(36).substr(2, 9);
+        let prefType = $('rnd-type').value;
+        window.hostType = prefType;
+        // Generate fresh userId each search to avoid stale presence
+        window.myUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+        window.matchFound = false;
+        window.isCurrentlyHosting = false;
         
-        function doSearch() {
-            if(!isRandomMatchmaking || window.hasGotReply) return;
-            $('rnd-status').textContent = 'Scanning network...';
-            mqttClient.subscribe(REPLY_TOPIC_PREFIX + myMqttId);
+        console.log('Starting Supabase search as', window.myUserId);
+        
+        if(!supabaseClient) {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            console.log('Supabase client initialized');
+            initOnlineCounter();
+        }
+        
+        matchmakingChannel = supabaseClient.channel('bingofest_lobby', {
+            config: { presence: { key: window.myUserId } }
+        });
+        
+        matchmakingChannel.on('presence', { event: 'sync' }, () => {
+            if(!isRandomMatchmaking || window.matchFound) return;
             
-            setTimeout(() => {
-                if(!isRandomMatchmaking || window.hasGotReply) return;
-                mqttClient.publish(PING_TOPIC, JSON.stringify({id: myMqttId, prefType: $('rnd-type').value}));
-                
-                window.pingTimerId = setTimeout(() => {
-                    if(!isRandomMatchmaking || window.hasGotReply) return;
-                    mqttClient.unsubscribe(REPLY_TOPIC_PREFIX + myMqttId);
-                    becomeLobbyHost();
-                }, 1500);
-            }, 100);
-        }
-
-        if(mqttClient.connected) {
-            doSearch();
-        } else {
-            mqttClient.once('connect', doSearch);
-        }
+            const state = matchmakingChannel.presenceState();
+            console.log('Presence sync state:', JSON.stringify(state));
+            
+            for (const key in state) {
+                for (const presence of state[key]) {
+                    if(presence.isHost && presence.signalChannelId && presence.userId !== window.myUserId) {
+                        let theirType = presence.prefType;
+                        let myType = window.hostType;
+                        let isCompatible = false;
+                        
+                        if(myType === 'any') isCompatible = true;
+                        else if(theirType === 'any' || theirType === myType) isCompatible = true;
+                        
+                        if(isCompatible) {
+                            if(window.isCurrentlyHosting && presence.userId < window.myUserId) {
+                                console.log('Tie break: ignoring', presence.userId);
+                                continue;
+                            }
+                            
+                            console.log('Match found! Connecting to', presence.userId);
+                            window.matchFound = true;
+                            window.isCurrentlyHosting = false;
+                            matchmakingChannel.untrack();
+                            connectToHost('unused', presence.userId, presence.signalChannelId);
+                            return;
+                        }
+                    }
+                }
+            }
+        });
+        
+        matchmakingChannel.subscribe(async (status) => {
+            console.log('Supabase channel status:', status);
+            if (status === 'SUBSCRIBED' && isRandomMatchmaking) {
+                setTimeout(() => {
+                    if(!window.matchFound && isRandomMatchmaking && !window.isCurrentlyHosting) {
+                        console.log('No matches found. Becoming host.');
+                        becomeSupabaseHost();
+                    }
+                }, 800);
+            } else if(status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+                console.error('Supabase error:', status);
+            }
+        });
     }
 
     $('bn').addEventListener('click',()=>{
@@ -897,30 +1141,26 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
                 const code=$('ol-join-code').value.trim().toUpperCase();
                 if(!code) return;
                 $('bn').disabled=true; $('bn').textContent='Connecting...';
-                if(peer) peer.destroy();
-                peer = new Peer();
-                peer.on('open', id => {
-                    conn = peer.connect('bingo-fest-' + code);
-                    conn.on('open', ()=>{
-                        setupConn();
-                        conn.send({type:'join', guestName:nm, guestColor:selC});
-                        $('ol-status').style.display='block';
-                        $('ol-status').textContent='Joined! Waiting for Host to start.';
-                        $('bn').textContent='Waiting...';
-                    });
-                    conn.on('error', err=>{
-                        customAlert('Could not connect to room. Check the code.');
-                        $('bn').disabled=false; $('bn').textContent='Start Match';
-                    });
+                
+                window.myUserId = window.myUserId || 'user_' + Math.random().toString(36).substr(2, 9);
+                if(!supabaseClient) { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
+                
+                setupWebRTCGuest('bingofest_room_' + code, null, () => {
+                    setupConn();
+                    conn.send({type:'join', guestName:nm, guestColor:selC});
+                    $('ol-status').style.display='block';
+                    $('ol-status').textContent='Joined! Waiting for Host to start.';
+                    $('bn').textContent='Waiting...';
+                }, () => {
+                    customAlert('Could not connect to room. Check the code.');
+                    $('bn').disabled=false; $('bn').textContent='Start Match';
                 });
             }
         } else if(mode==='random') {
-            if(!peer && !conn) {
-                $('bn').disabled=true;
-                $('inp').disabled=true;
-                isRandomMatchmaking = true;
-                startRandomSearch();
-            }
+            // If already searching, reset first
+            if(isRandomMatchmaking) resetRandomUI();
+            isRandomMatchmaking = true;
+            startRandomSearch();
         } else {
             if(mode==='solo') players[0]={name:nm,color:selC,isAI:false};
             else if(mode==='local') players.push({name:nm,color:selC,isAI:false});
@@ -950,6 +1190,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
 
     /* Launch */
     function launch(){
+        window.isQuitting = false;
         $('s-setup').classList.add('hidden');$('s-game').classList.remove('hidden');
         pd=[];active=false;filled=false;curP=0;stopConf();$('ov').classList.add('hidden');
         $('g-called').classList.add('hidden');
@@ -1527,40 +1768,67 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         }
         startConf();
 
-        if(wasRandom) {
-            $('b-re').textContent = 'New Match';
-            $('b-re').disabled = false;
-            $('b-re').onclick = () => {
-                A.p('click');
-                $('ov').classList.add('hidden');
-                goMenu();
-                mode = 'random';
-                openSetup();
-            };
-        } else {
-            window.localRematchReq = false;
-            window.opponentRematchReq = false;
-            $('b-re').textContent = 'Rematch';
-            $('b-re').disabled = false;
-            $('b-re').onclick = () => {
-                A.p('click');
-                if(mode==='online') {
-                    window.localRematchReq = true;
-                    if(window.opponentRematchReq) {
-                        if(isHost) {
-                            conn.send({type:'restart', hostName:players[0].name, hostColor:players[0].color});
-                            $('ov').classList.add('hidden');CG.ad(()=>launch());
-                        }
+        // Always use the same rematch logic for both Random and Room online modes
+        window.localRematchReq = false;
+        window.opponentRematchReq = false;
+        $('b-re').classList.remove('glow');
+        $('b-re').textContent = 'Rematch';
+        $('b-re').disabled = false;
+        $('b-re').onclick = () => {
+            A.p('click');
+            $('b-re').classList.remove('glow');
+            if(mode==='online') {
+                window.localRematchReq = true;
+                if(window.opponentRematchReq) {
+                    if(isHost) {
+                        conn.send({type:'restart', hostName:players[0].name, hostColor:players[0].color});
+                        $('ov').classList.add('hidden');
+                        if($('b-nm')) $('b-nm').classList.add('hidden');
+                        launch();
                     } else {
-                        $('b-re').textContent = 'Waiting...';
+                        $('b-re').textContent = 'Waiting for Host...';
                         $('b-re').disabled = true;
                         conn.send({type:'rematch_req'});
                     }
                 } else {
-                    $('ov').classList.add('hidden');CG.ad(()=>launch());
+                    $('b-re').textContent = 'Waiting...';
+                    $('b-re').disabled = true;
+                    conn.send({type:'rematch_req'});
                 }
+            } else {
+                $('ov').classList.add('hidden');
+                if($('b-nm')) $('b-nm').classList.add('hidden');
+                launch();
+            }
+        };
+
+        // If it was a Random match, also show the New Match button to leave and find a new opponent
+        if(wasRandom && $('b-nm')) {
+            $('b-nm').classList.remove('hidden');
+            $('b-nm').onclick = () => {
+                A.p('click');
+                $('ov').classList.add('hidden');
+                $('b-nm').classList.add('hidden');
+                window.isQuitting = true;
+                if(conn) { try{conn.send({type:'quit'});}catch(e){} conn.close(); conn = null; }
+                if(rtcPeerConnection) { rtcPeerConnection.onconnectionstatechange = null; rtcPeerConnection.close(); rtcPeerConnection = null; }
+                goMenu();
+                mode = 'random';
+                openSetup();
             };
+        } else if($('b-nm')) {
+            $('b-nm').classList.add('hidden');
         }
+
+        $('b-mm').onclick = () => {
+            A.p('click');
+            window.isQuitting = true;
+            if(conn) { try{conn.send({type:'quit'});}catch(e){} conn.close(); conn = null; }
+            if(rtcPeerConnection) { rtcPeerConnection.onconnectionstatechange = null; rtcPeerConnection.close(); rtcPeerConnection = null; }
+            $('ov').classList.add('hidden');
+            if($('b-nm')) $('b-nm').classList.add('hidden');
+            goMenu();
+        };
 
         // Show all boards
         const eb=$('ov-bds');eb.innerHTML='';
@@ -1676,14 +1944,48 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         ovCtx.clearRect(0,0,ovCvs.width,ovCvs.height);
     }
 
-    $('b-mm').addEventListener('click',()=>{A.p('click');$('ov').classList.add('hidden');CG.ad(()=>goMenu());});
-
     function goMenu(){
+        window.isQuitting = true;
+        try { if(conn) { conn.send({type:'quit'}); } } catch(e) {}
+        if(conn) { conn.close(); conn=null; }
+        if(rtcPeerConnection) { rtcPeerConnection.onconnectionstatechange = null; rtcPeerConnection.close(); rtcPeerConnection=null; }
+        if(window._signalChannel && supabaseClient) { supabaseClient.removeChannel(window._signalChannel); window._signalChannel=null; }
         CG.gp();stopConf();$('s-game').classList.add('hidden');$('s-setup').classList.add('hidden');$('s-menu').classList.remove('hidden');$('hb-m').classList.add('hidden');$('ov').classList.add('hidden');document.body.classList.remove('game-active','has-sidebar');
-        if(peer)peer.destroy();peer=null;conn=null;
         if(isRandomMatchmaking) resetRandomUI();
-        setTimeout(() => { window.isQuitting = false; }, 500);
+        // isQuitting stays true until next launch() call
     }
+
+    /* Global online player counter */
+    let globalPresenceChannel = null;
+    function initOnlineCounter() {
+        if(globalPresenceChannel) return;
+        const globalId = 'user_' + Math.random().toString(36).substr(2, 9);
+        globalPresenceChannel = supabaseClient.channel('bingofest_online', {
+            config: { presence: { key: globalId } }
+        });
+        globalPresenceChannel.on('presence', { event: 'sync' }, () => {
+            const state = globalPresenceChannel.presenceState();
+            const count = Object.keys(state).length;
+            const el = $('online-count');
+            if(el) el.textContent = count;
+        });
+        globalPresenceChannel.subscribe(async (status) => {
+            if(status === 'SUBSCRIBED') {
+                await globalPresenceChannel.track({ online: true, joinedAt: Date.now() });
+            }
+        });
+    }
+
+    // Also init counter if supabase is created elsewhere (e.g. room match)
+    function ensureOnlineCounter() {
+        if(!supabaseClient) {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
+        initOnlineCounter();
+    }
+    // Start counter on page load
+    ensureOnlineCounter();
+
 });
 </script>
 </body>
