@@ -716,7 +716,7 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
             if(err.type === 'peer-unavailable') {
                 peer.destroy();
                 let type = $('rnd-type').value;
-                if(type === 'any' && randomLobbyIdx % 3 !== 0) {
+                if(type === 'any') {
                     nextLobby();
                 } else {
                     const hostIdx = (type === 'any') ? Math.ceil(randomLobbyIdx / 3) : randomLobbyIdx;
@@ -733,10 +733,15 @@ const CG={s:null,init(){if(window.CrazyGames&&window.CrazyGames.SDK)this.s=windo
         randomLobbyIdx++;
         let maxL = ($('rnd-type').value === 'any') ? MAX_LOBBY * 3 : MAX_LOBBY;
         if(randomLobbyIdx > maxL) {
-            $('rnd-status').textContent = 'No players found.';
-            $('rnd-status').style.color = 'var(--ros)';
-            resetRandomUI();
-            customAlert('Matchmaking failed. No available players.');
+            if($('rnd-type').value === 'any') {
+                randomLobbyIdx = 1;
+                setTimeout(searchLobby, 400);
+            } else {
+                $('rnd-status').textContent = 'No players found.';
+                $('rnd-status').style.color = 'var(--ros)';
+                resetRandomUI();
+                customAlert('Matchmaking failed. No available players.');
+            }
         } else {
             setTimeout(searchLobby, 400);
         }
