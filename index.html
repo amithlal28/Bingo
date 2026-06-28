@@ -1015,7 +1015,10 @@ const CG={s:null,init(){
         
         return {
             send: (data) => { if(channel.readyState === 'open') channel.send(JSON.stringify(data)); },
-            on: (event, cb) => { listeners[event].push(cb); },
+            on: (event, cb) => { 
+                listeners[event].push(cb); 
+                if(event === 'open' && channel.readyState === 'open') cb();
+            },
             close: () => channel.close(),
             get open() { return channel.readyState === 'open'; }
         };
@@ -2000,7 +2003,7 @@ const CG={s:null,init(){
             if(!p.cellEls) return;
             if(mode === 'local' && i !== curP) return;
 
-            p.nums.sort(()=>Math.random()-.5);
+            p.nums = shuffle(gs*gs);
             p.numMap={};
             p.nums.forEach((v,j)=>{
                 p.numMap[v]={r:Math.floor(j/gs),c:j%gs};
@@ -2509,10 +2512,10 @@ const CG={s:null,init(){
                     // Host checks if everyone agreed
                     if(isHost && reqCount >= total) {
                         roomRematchReqs = new Set(); roomReadyCount = 0; isLocalReady = false;
-                        RoomConn.send({type:'rematch_start', fromUID: RoomConn.myUID});
+                        roomPlayers.forEach((p,i) => { roomBoards[i] = shuffle(gs*gs); });
+                        RoomConn.send({type:'setup', gs, allPlayers:roomPlayers, maxPlayers:roomMaxPlayers, boards:roomBoards, fromUID: RoomConn.myUID});
                         $('ov').classList.add('hidden');
                         if($('b-nm')) $('b-nm').classList.add('hidden');
-                        launch();
                     }
                 } else {
                     // WebRTC (random match) legacy
